@@ -182,7 +182,7 @@ export async function streamChat(
       method: "POST",
       headers: authHeaders(provider),
       body: JSON.stringify(body),
-      signal,
+      signal: signal ?? null,
     });
   } catch (error) {
     throw new LlmError(
