@@ -129,7 +129,9 @@ export function ChatWorkspace({ conversationId }: { conversationId: string }) {
       if (!activeProvider) return [];
       if (activeProvider.kind !== "lovable" && isLocalEndpoint(activeProvider.base_url)) {
         const { listLocalModels } = await import("@/lib/local-stream");
-        return listLocalModels(activeProvider.kind, activeProvider.base_url).catch(() => []);
+        return listLocalModels(activeProvider.kind as "openai" | "ollama", activeProvider.base_url).catch(
+          () => [],
+        );
       }
       const { testProviderConnection } = await import("@/lib/studio.functions");
       const result = await testProviderConnection({ data: { providerId: activeProvider.id } });
@@ -187,7 +189,7 @@ export function ChatWorkspace({ conversationId }: { conversationId: string }) {
         const systemPrompt = conversation.system_prompt.trim();
         await streamLocalChat(
           {
-            kind: provider.kind,
+            kind: provider.kind as "openai" | "ollama",
             baseUrl: provider.base_url,
             model,
             messages: systemPrompt
@@ -448,9 +450,9 @@ export function ChatWorkspace({ conversationId }: { conversationId: string }) {
           </Select>
         ) : (
           <Input
-            value={currentModel}
+            defaultValue={currentModel}
+            key={currentModel}
             placeholder="model name"
-            onChange={(event) => setInput(input)}
             onBlur={(event) => updateConversation.mutate({ model: event.target.value })}
             className="h-9 w-[200px] text-xs"
           />
@@ -490,7 +492,7 @@ export function ChatWorkspace({ conversationId }: { conversationId: string }) {
                 max={2}
                 step={0.05}
                 value={[Number(conversation.temperature)]}
-                onValueChange={([value]) => updateConversation.mutate({ temperature: value })}
+                onValueChange={([value]) => updateConversation.mutate({ temperature: value ?? 0.7 })}
               />
             </div>
             <div>
@@ -504,7 +506,7 @@ export function ChatWorkspace({ conversationId }: { conversationId: string }) {
                 max={16384}
                 step={128}
                 value={[conversation.max_tokens]}
-                onValueChange={([value]) => updateConversation.mutate({ max_tokens: value })}
+                onValueChange={([value]) => updateConversation.mutate({ max_tokens: value ?? 2048 })}
               />
             </div>
           </PopoverContent>
