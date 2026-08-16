@@ -12,6 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedProvidersRouteImport } from './routes/_authenticated/providers'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated/studio'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedStudioIndexRouteImport } from './routes/_authenticated/studio.index'
@@ -30,6 +33,21 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProvidersRoute = AuthenticatedProvidersRouteImport.update({
+  id: '/providers',
+  path: '/providers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedStudioRoute = AuthenticatedStudioRouteImport.update({
   id: '/studio',
@@ -57,6 +75,9 @@ const AuthenticatedStudioConversationIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/providers': typeof AuthenticatedProvidersRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/studio': typeof AuthenticatedStudioRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/studio/$conversationId': typeof AuthenticatedStudioConversationIdRoute
@@ -65,6 +86,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/providers': typeof AuthenticatedProvidersRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/api/chat': typeof ApiChatRoute
   '/studio/$conversationId': typeof AuthenticatedStudioConversationIdRoute
   '/studio': typeof AuthenticatedStudioIndexRoute
@@ -74,6 +98,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/providers': typeof AuthenticatedProvidersRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/studio': typeof AuthenticatedStudioRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/_authenticated/studio/$conversationId': typeof AuthenticatedStudioConversationIdRoute
@@ -84,17 +111,31 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/dashboard'
+    | '/providers'
+    | '/settings'
     | '/studio'
     | '/api/chat'
     | '/studio/$conversationId'
     | '/studio/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/api/chat' | '/studio/$conversationId' | '/studio'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/providers'
+    | '/settings'
+    | '/api/chat'
+    | '/studio/$conversationId'
+    | '/studio'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/providers'
+    | '/_authenticated/settings'
     | '/_authenticated/studio'
     | '/api/chat'
     | '/_authenticated/studio/$conversationId'
@@ -130,6 +171,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/providers': {
+      id: '/_authenticated/providers'
+      path: '/providers'
+      fullPath: '/providers'
+      preLoaderRoute: typeof AuthenticatedProvidersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/studio': {
       id: '/_authenticated/studio'
@@ -177,10 +239,16 @@ const AuthenticatedStudioRouteWithChildren =
   AuthenticatedStudioRoute._addFileChildren(AuthenticatedStudioRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedProvidersRoute: typeof AuthenticatedProvidersRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStudioRoute: typeof AuthenticatedStudioRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedProvidersRoute: AuthenticatedProvidersRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStudioRoute: AuthenticatedStudioRouteWithChildren,
 }
 
