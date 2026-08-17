@@ -22,6 +22,7 @@ import { Route as ApiGenerateRouteImport } from './routes/api/generate'
 import { Route as AuthenticatedStudioIndexRouteImport } from './routes/_authenticated/studio.index'
 import { Route as AuthenticatedStudioConversationIdRouteImport } from './routes/_authenticated/studio.$conversationId'
 import { Route as AuthenticatedWorkspaceIndexRouteImport } from './routes/_authenticated/workspace.index'
+import { Route as AuthenticatedWorkspaceProjectIdRouteImport } from './routes/_authenticated/workspace.$projectId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -90,6 +91,12 @@ const AuthenticatedWorkspaceIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedWorkspaceRoute,
   } as any)
+const AuthenticatedWorkspaceProjectIdRoute =
+  AuthenticatedWorkspaceProjectIdRouteImport.update({
+    id: '/$projectId',
+    path: '/$projectId',
+    getParentRoute: () => AuthenticatedWorkspaceRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/api/generate': typeof ApiGenerateRoute
   '/studio/$conversationId': typeof AuthenticatedStudioConversationIdRoute
+  '/workspace/$projectId': typeof AuthenticatedWorkspaceProjectIdRoute
   '/studio/': typeof AuthenticatedStudioIndexRoute
   '/workspace/': typeof AuthenticatedWorkspaceIndexRoute
 }
@@ -114,6 +122,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/api/generate': typeof ApiGenerateRoute
   '/studio/$conversationId': typeof AuthenticatedStudioConversationIdRoute
+  '/workspace/$projectId': typeof AuthenticatedWorkspaceProjectIdRoute
   '/studio': typeof AuthenticatedStudioIndexRoute
   '/workspace': typeof AuthenticatedWorkspaceIndexRoute
 }
@@ -130,6 +139,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/api/generate': typeof ApiGenerateRoute
   '/_authenticated/studio/$conversationId': typeof AuthenticatedStudioConversationIdRoute
+  '/_authenticated/workspace/$projectId': typeof AuthenticatedWorkspaceProjectIdRoute
   '/_authenticated/studio/': typeof AuthenticatedStudioIndexRoute
   '/_authenticated/workspace/': typeof AuthenticatedWorkspaceIndexRoute
 }
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/generate'
     | '/studio/$conversationId'
+    | '/workspace/$projectId'
     | '/studio/'
     | '/workspace/'
   fileRoutesByTo: FileRoutesByTo
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/generate'
     | '/studio/$conversationId'
+    | '/workspace/$projectId'
     | '/studio'
     | '/workspace'
   id:
@@ -173,6 +185,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/generate'
     | '/_authenticated/studio/$conversationId'
+    | '/_authenticated/workspace/$projectId'
     | '/_authenticated/studio/'
     | '/_authenticated/workspace/'
   fileRoutesById: FileRoutesById
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkspaceIndexRouteImport
       parentRoute: typeof AuthenticatedWorkspaceRoute
     }
+    '/_authenticated/workspace/$projectId': {
+      id: '/_authenticated/workspace/$projectId'
+      path: '/$projectId'
+      fullPath: '/workspace/$projectId'
+      preLoaderRoute: typeof AuthenticatedWorkspaceProjectIdRouteImport
+      parentRoute: typeof AuthenticatedWorkspaceRoute
+    }
   }
 }
 
@@ -296,11 +316,13 @@ const AuthenticatedStudioRouteWithChildren =
   AuthenticatedStudioRoute._addFileChildren(AuthenticatedStudioRouteChildren)
 
 interface AuthenticatedWorkspaceRouteChildren {
+  AuthenticatedWorkspaceProjectIdRoute: typeof AuthenticatedWorkspaceProjectIdRoute
   AuthenticatedWorkspaceIndexRoute: typeof AuthenticatedWorkspaceIndexRoute
 }
 
 const AuthenticatedWorkspaceRouteChildren: AuthenticatedWorkspaceRouteChildren =
   {
+    AuthenticatedWorkspaceProjectIdRoute: AuthenticatedWorkspaceProjectIdRoute,
     AuthenticatedWorkspaceIndexRoute: AuthenticatedWorkspaceIndexRoute,
   }
 
