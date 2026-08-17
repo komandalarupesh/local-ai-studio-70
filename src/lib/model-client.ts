@@ -14,13 +14,13 @@ export type RunMessage = { role: "user" | "assistant"; content: string };
 export type RunOptions = {
   provider: RunProvider;
   model: string;
-  systemPrompt?: string;
+  systemPrompt?: string | undefined;
   messages: RunMessage[];
-  temperature?: number;
+  temperature?: number | undefined;
   /** Provider-side output cap. This is the model/provider limit, not an app limit. */
-  maxTokens?: number;
-  onDelta?: (delta: string, full: string) => void;
-  signal?: AbortSignal;
+  maxTokens?: number | undefined;
+  onDelta?: ((delta: string, full: string) => void) | undefined;
+  signal?: AbortSignal | undefined;
 };
 
 /**
