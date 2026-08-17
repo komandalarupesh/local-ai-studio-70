@@ -2,7 +2,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Link, Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Loader2, LogOut, MessagesSquare, Plug, Settings } from "lucide-react";
+import {
+  Boxes,
+  LayoutDashboard,
+  Loader2,
+  LogOut,
+  MessagesSquare,
+  Plug,
+  Settings,
+} from "lucide-react";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -12,6 +20,7 @@ export const Route = createFileRoute("/_authenticated")({
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/studio", label: "Studio", icon: MessagesSquare },
+  { to: "/workspace", label: "Workspace", icon: Boxes },
   { to: "/providers", label: "Providers", icon: Plug },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
