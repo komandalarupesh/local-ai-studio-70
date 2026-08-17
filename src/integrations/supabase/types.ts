@@ -19,8 +19,12 @@ export type Database = {
           created_at: string
           id: string
           max_tokens: number
+          mode: string
           model: string
+          project_id: string | null
           provider_id: string | null
+          summarized_through: string | null
+          summary: string
           system_prompt: string
           temperature: number
           title: string
@@ -31,8 +35,12 @@ export type Database = {
           created_at?: string
           id?: string
           max_tokens?: number
+          mode?: string
           model?: string
+          project_id?: string | null
           provider_id?: string | null
+          summarized_through?: string | null
+          summary?: string
           system_prompt?: string
           temperature?: number
           title?: string
@@ -43,8 +51,12 @@ export type Database = {
           created_at?: string
           id?: string
           max_tokens?: number
+          mode?: string
           model?: string
+          project_id?: string | null
           provider_id?: string | null
+          summarized_through?: string | null
+          summary?: string
           system_prompt?: string
           temperature?: number
           title?: string
@@ -52,6 +64,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "conversations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversations_provider_id_fkey"
             columns: ["provider_id"]
@@ -64,6 +83,7 @@ export type Database = {
       messages: {
         Row: {
           attachments: Json
+          compacted: boolean
           content: string
           conversation_id: string
           created_at: string
@@ -74,6 +94,7 @@ export type Database = {
         }
         Insert: {
           attachments?: Json
+          compacted?: boolean
           content?: string
           conversation_id: string
           created_at?: string
@@ -84,6 +105,7 @@ export type Database = {
         }
         Update: {
           attachments?: Json
+          compacted?: boolean
           content?: string
           conversation_id?: string
           created_at?: string
@@ -117,6 +139,159 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+        }
+        Relationships: []
+      }
+      project_checks: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          output: string
+          project_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          output?: string
+          project_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          output?: string
+          project_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_checks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_files: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          language: string
+          path: string
+          project_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          language?: string
+          path: string
+          project_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          language?: string
+          path?: string
+          project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_tasks: {
+        Row: {
+          created_at: string
+          detail: string
+          id: string
+          position: number
+          project_id: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string
+          id?: string
+          position?: number
+          project_id: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string
+          id?: string
+          position?: number
+          project_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          mode: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          mode?: string
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          mode?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

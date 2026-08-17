@@ -16,9 +16,13 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedProvidersRouteImport } from './routes/_authenticated/providers'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated/studio'
+import { Route as AuthenticatedWorkspaceRouteImport } from './routes/_authenticated/workspace'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiGenerateRouteImport } from './routes/api/generate'
 import { Route as AuthenticatedStudioIndexRouteImport } from './routes/_authenticated/studio.index'
 import { Route as AuthenticatedStudioConversationIdRouteImport } from './routes/_authenticated/studio.$conversationId'
+import { Route as AuthenticatedWorkspaceIndexRouteImport } from './routes/_authenticated/workspace.index'
+import { Route as AuthenticatedWorkspaceProjectIdRouteImport } from './routes/_authenticated/workspace.$projectId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -54,9 +58,19 @@ const AuthenticatedStudioRoute = AuthenticatedStudioRouteImport.update({
   path: '/studio',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedWorkspaceRoute = AuthenticatedWorkspaceRouteImport.update({
+  id: '/workspace',
+  path: '/workspace',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGenerateRoute = ApiGenerateRouteImport.update({
+  id: '/api/generate',
+  path: '/api/generate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedStudioIndexRoute =
@@ -71,6 +85,18 @@ const AuthenticatedStudioConversationIdRoute =
     path: '/$conversationId',
     getParentRoute: () => AuthenticatedStudioRoute,
   } as any)
+const AuthenticatedWorkspaceIndexRoute =
+  AuthenticatedWorkspaceIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedWorkspaceRoute,
+  } as any)
+const AuthenticatedWorkspaceProjectIdRoute =
+  AuthenticatedWorkspaceProjectIdRouteImport.update({
+    id: '/$projectId',
+    path: '/$projectId',
+    getParentRoute: () => AuthenticatedWorkspaceRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -79,9 +105,13 @@ export interface FileRoutesByFullPath {
   '/providers': typeof AuthenticatedProvidersRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/studio': typeof AuthenticatedStudioRouteWithChildren
+  '/workspace': typeof AuthenticatedWorkspaceRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/api/generate': typeof ApiGenerateRoute
   '/studio/$conversationId': typeof AuthenticatedStudioConversationIdRoute
+  '/workspace/$projectId': typeof AuthenticatedWorkspaceProjectIdRoute
   '/studio/': typeof AuthenticatedStudioIndexRoute
+  '/workspace/': typeof AuthenticatedWorkspaceIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -90,8 +120,11 @@ export interface FileRoutesByTo {
   '/providers': typeof AuthenticatedProvidersRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/generate': typeof ApiGenerateRoute
   '/studio/$conversationId': typeof AuthenticatedStudioConversationIdRoute
+  '/workspace/$projectId': typeof AuthenticatedWorkspaceProjectIdRoute
   '/studio': typeof AuthenticatedStudioIndexRoute
+  '/workspace': typeof AuthenticatedWorkspaceIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -102,9 +135,13 @@ export interface FileRoutesById {
   '/_authenticated/providers': typeof AuthenticatedProvidersRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/studio': typeof AuthenticatedStudioRouteWithChildren
+  '/_authenticated/workspace': typeof AuthenticatedWorkspaceRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/api/generate': typeof ApiGenerateRoute
   '/_authenticated/studio/$conversationId': typeof AuthenticatedStudioConversationIdRoute
+  '/_authenticated/workspace/$projectId': typeof AuthenticatedWorkspaceProjectIdRoute
   '/_authenticated/studio/': typeof AuthenticatedStudioIndexRoute
+  '/_authenticated/workspace/': typeof AuthenticatedWorkspaceIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -115,9 +152,13 @@ export interface FileRouteTypes {
     | '/providers'
     | '/settings'
     | '/studio'
+    | '/workspace'
     | '/api/chat'
+    | '/api/generate'
     | '/studio/$conversationId'
+    | '/workspace/$projectId'
     | '/studio/'
+    | '/workspace/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -126,8 +167,11 @@ export interface FileRouteTypes {
     | '/providers'
     | '/settings'
     | '/api/chat'
+    | '/api/generate'
     | '/studio/$conversationId'
+    | '/workspace/$projectId'
     | '/studio'
+    | '/workspace'
   id:
     | '__root__'
     | '/'
@@ -137,9 +181,13 @@ export interface FileRouteTypes {
     | '/_authenticated/providers'
     | '/_authenticated/settings'
     | '/_authenticated/studio'
+    | '/_authenticated/workspace'
     | '/api/chat'
+    | '/api/generate'
     | '/_authenticated/studio/$conversationId'
+    | '/_authenticated/workspace/$projectId'
     | '/_authenticated/studio/'
+    | '/_authenticated/workspace/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -147,6 +195,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiGenerateRoute: typeof ApiGenerateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -200,11 +249,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/workspace': {
+      id: '/_authenticated/workspace'
+      path: '/workspace'
+      fullPath: '/workspace'
+      preLoaderRoute: typeof AuthenticatedWorkspaceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/generate': {
+      id: '/api/generate'
+      path: '/api/generate'
+      fullPath: '/api/generate'
+      preLoaderRoute: typeof ApiGenerateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/studio/': {
@@ -220,6 +283,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/studio/$conversationId'
       preLoaderRoute: typeof AuthenticatedStudioConversationIdRouteImport
       parentRoute: typeof AuthenticatedStudioRoute
+    }
+    '/_authenticated/workspace/': {
+      id: '/_authenticated/workspace/'
+      path: '/'
+      fullPath: '/workspace/'
+      preLoaderRoute: typeof AuthenticatedWorkspaceIndexRouteImport
+      parentRoute: typeof AuthenticatedWorkspaceRoute
+    }
+    '/_authenticated/workspace/$projectId': {
+      id: '/_authenticated/workspace/$projectId'
+      path: '/$projectId'
+      fullPath: '/workspace/$projectId'
+      preLoaderRoute: typeof AuthenticatedWorkspaceProjectIdRouteImport
+      parentRoute: typeof AuthenticatedWorkspaceRoute
     }
   }
 }
@@ -238,11 +315,28 @@ const AuthenticatedStudioRouteChildren: AuthenticatedStudioRouteChildren = {
 const AuthenticatedStudioRouteWithChildren =
   AuthenticatedStudioRoute._addFileChildren(AuthenticatedStudioRouteChildren)
 
+interface AuthenticatedWorkspaceRouteChildren {
+  AuthenticatedWorkspaceProjectIdRoute: typeof AuthenticatedWorkspaceProjectIdRoute
+  AuthenticatedWorkspaceIndexRoute: typeof AuthenticatedWorkspaceIndexRoute
+}
+
+const AuthenticatedWorkspaceRouteChildren: AuthenticatedWorkspaceRouteChildren =
+  {
+    AuthenticatedWorkspaceProjectIdRoute: AuthenticatedWorkspaceProjectIdRoute,
+    AuthenticatedWorkspaceIndexRoute: AuthenticatedWorkspaceIndexRoute,
+  }
+
+const AuthenticatedWorkspaceRouteWithChildren =
+  AuthenticatedWorkspaceRoute._addFileChildren(
+    AuthenticatedWorkspaceRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedProvidersRoute: typeof AuthenticatedProvidersRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStudioRoute: typeof AuthenticatedStudioRouteWithChildren
+  AuthenticatedWorkspaceRoute: typeof AuthenticatedWorkspaceRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -250,6 +344,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProvidersRoute: AuthenticatedProvidersRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStudioRoute: AuthenticatedStudioRouteWithChildren,
+  AuthenticatedWorkspaceRoute: AuthenticatedWorkspaceRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -260,6 +355,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiGenerateRoute: ApiGenerateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
