@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ConfirmAction } from "@/components/workspace/ConfirmAction";
 import { cn } from "@/lib/utils";
 import { buildTree, type ProjectFile, type TreeNode } from "@/lib/project-files";
 import { ChevronDown, ChevronRight, File, FilePlus, Folder, Trash2 } from "lucide-react";
@@ -10,12 +11,14 @@ export function FileExplorer({
   onSelect,
   onCreate,
   onDelete,
+  loading = false,
 }: {
   files: ProjectFile[];
   activePath: string | null;
   onSelect: (file: ProjectFile) => void;
   onCreate: () => void;
   onDelete: (file: ProjectFile) => void;
+  loading?: boolean;
 }) {
   const tree = buildTree(files);
 
@@ -30,7 +33,13 @@ export function FileExplorer({
         </Button>
       </div>
       <div className="scroll-slim min-h-0 flex-1 overflow-y-auto p-2">
-        {files.length === 0 ? (
+        {loading ? (
+          <div className="space-y-1.5 px-2 py-2">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-4 animate-pulse rounded bg-muted/60" />
+            ))}
+          </div>
+        ) : files.length === 0 ? (
           <p className="px-2 py-3 text-xs text-muted-foreground">
             No files yet. Ask the agent to build something, or create a file manually.
           </p>
@@ -83,13 +92,19 @@ function TreeItem({
           <File className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate font-mono">{node.name}</span>
         </button>
-        <button
-          className="opacity-0 transition-opacity group-hover:opacity-100"
-          aria-label={`Delete ${node.path}`}
-          onClick={() => node.file && onDelete(node.file)}
-        >
-          <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
-        </button>
+        <ConfirmAction
+          title="Delete this file?"
+          description={`"${node.path}" will be permanently removed from the project. This cannot be undone.`}
+          onConfirm={() => node.file && onDelete(node.file)}
+          trigger={
+            <button
+              className="opacity-60 transition-opacity hover:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+              aria-label={`Delete ${node.path}`}
+            >
+              <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
+            </button>
+          }
+        />
       </div>
     );
   }
