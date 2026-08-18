@@ -59,7 +59,8 @@ export function safePath(raw: string): string | null {
   path = path.split(/\s+[(#]/)[0] ?? path;
   path = path.replace(/\\/g, "/").trim();
 
-  if (/[\u0000-\u001f\u007f]/.test(path)) return null;
+  // Reject control characters (NUL..US and DEL) in paths.
+  if ([...path].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127)) return null;
   if (/^[a-z][a-z0-9+.-]*:/i.test(path)) return null; // http:, file:, data:
   if (/^~/.test(path)) return null;
   if (/^[a-z]:\//i.test(path)) return null; // windows drive
