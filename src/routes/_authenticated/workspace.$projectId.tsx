@@ -33,6 +33,8 @@ import type { RunProvider } from "@/lib/model-client";
 import type { ProjectFile } from "@/lib/project-files";
 import { MODE_LIST, modeConfig, type WorkspaceMode } from "@/lib/workspace-modes";
 import { cn } from "@/lib/utils";
+import { contextBudget } from "@/lib/model-context";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
@@ -583,9 +585,41 @@ function ProjectWorkspace() {
   }
 
   const used = contextChars(messages, conversation?.summary ?? "");
-  const pct = Math.min(100, Math.round((used / CONTEXT.workingChars) * 100));
+  const budget = contextBudget(model, conversation?.max_tokens ?? 8192);
+  const pct = Math.min(100, Math.round((used / budget.workingChars) * 100));
   const models = modelsQuery.data ?? [];
   const latestCheck = checksQuery.data?.[0];
+
+  const plannerNode = (
+          <TaskPlanner
+            tasks={tasks}
+            runningTaskId={runningTaskId}
+            busy={busy}
+            onRun={(task) => void withRun(`Step: ${task.title}`, (signal) => runTask(task, signal))}
+            onRunAll={() => void runRemainingTasks()}
+            onReset={(task) => {
+              void supabase
+                .from("project_tasks")
+                .update({ status: "pending" })
+                .eq("id", task.id)
+                .then(() => invalidate([["project-tasks", projectId]]));
+            }}
+            onDelete={(task) => {
+              void supabase
+                .from("project_tasks")
+                .delete()
+                .eq("id", task.id)
+                .then(() => invalidate([["project-tasks", projectId]]));
+            }}
+            onClear={() => {
+              void supabase
+                .from("project_tasks")
+                .delete()
+                .eq("project_id", projectId)
+                .then(() => invalidate([["project-tasks", projectId]]));
+            }}
+          />
+  );
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -739,10 +773,13 @@ function ProjectWorkspace() {
                 context, including the running summary.
               </p>
               <p className="text-muted-foreground">
-                At {Math.round(CONTEXT.workingChars / 1000)}k characters the oldest turns are
-                summarized automatically and the newest {CONTEXT.keepRecentTurns} stay verbatim, so
-                long builds keep going. The hard limit is your provider's context window, not this
-                app.
+                {budget.known
+                  ? `Estimated window for “${model}”: ~${Math.round(budget.contextTokens / 1000)}k tokens.`
+                  : `“${model || "This model"}” is not in the known-window list, so a conservative ~${Math.round(budget.contextTokens / 1000)}k-token window is assumed.`}{" "}
+                Around {Math.round(budget.workingChars / 1000)}k characters the oldest turns are
+                folded into a running summary and the newest {CONTEXT.keepRecentTurns} stay
+                verbatim, so long builds keep going. Context is not unlimited — the real ceiling is
+                your provider and model, and this app adds no smaller cap of its own.
               </p>
             </PopoverContent>
           </Popover>
@@ -769,34 +806,7 @@ function ProjectWorkspace() {
 
       <div className="flex min-h-0 flex-1 flex-col xl:flex-row">
         <section className="hidden w-64 shrink-0 border-r border-border xl:block">
-          <TaskPlanner
-            tasks={tasks}
-            runningTaskId={runningTaskId}
-            busy={busy}
-            onRun={(task) => void withRun(`Step: ${task.title}`, (signal) => runTask(task, signal))}
-            onRunAll={() => void runRemainingTasks()}
-            onReset={(task) => {
-              void supabase
-                .from("project_tasks")
-                .update({ status: "pending" })
-                .eq("id", task.id)
-                .then(() => invalidate([["project-tasks", projectId]]));
-            }}
-            onDelete={(task) => {
-              void supabase
-                .from("project_tasks")
-                .delete()
-                .eq("id", task.id)
-                .then(() => invalidate([["project-tasks", projectId]]));
-            }}
-            onClear={() => {
-              void supabase
-                .from("project_tasks")
-                .delete()
-                .eq("project_id", projectId)
-                .then(() => invalidate([["project-tasks", projectId]]));
-            }}
-          />
+          {plannerNode}
         </section>
 
         <section className="flex min-h-0 min-w-0 flex-1 flex-col border-r border-border">
