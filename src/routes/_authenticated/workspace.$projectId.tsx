@@ -941,19 +941,30 @@ function ProjectWorkspace() {
 
             {pane === "checks" && (
               <div className="scroll-slim h-full overflow-y-auto p-3">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="mb-3 gap-1.5 text-xs"
-                  disabled={busy}
-                  onClick={() => void runChecks()}
-                >
-                  <PlayCircle className="size-3.5" /> Run checks now
-                </Button>
-                {(checksQuery.data ?? []).length === 0 && (
+                <div className="mb-3 flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="gap-1.5 text-xs"
+                    disabled={busy}
+                    onClick={() => void runChecks()}
+                  >
+                    <PlayCircle className="size-3.5" /> Run static checks
+                  </Button>
+                  {checksQuery.isLoading && (
+                    <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+                  )}
+                </div>
+                <p className="mb-3 rounded-md border border-border/70 bg-muted/30 p-2 text-[11px] leading-relaxed text-muted-foreground">
+                  These are <span className="text-foreground">static browser checks</span> — JSON
+                  and JavaScript syntax, the HTML entry point and relative references. There is no
+                  build container here, so no compiler, bundler, package install or test suite runs,
+                  and a passing result is not a passing build. Download the project to run a real
+                  toolchain locally.
+                </p>
+                {(checksQuery.data ?? []).length === 0 && !checksQuery.isLoading && (
                   <p className="text-xs text-muted-foreground">
-                    No check runs yet. Checks validate JSON and JavaScript syntax, the HTML entry
-                    point and relative file references.
+                    No check runs yet. Run the static checks to see results here.
                   </p>
                 )}
                 <div className="space-y-2">
@@ -962,15 +973,18 @@ function ProjectWorkspace() {
                       key={check.id}
                       className="rounded-lg border border-border/70 bg-surface/50 p-2.5"
                     >
-                      <div className="flex items-center gap-2 text-xs">
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
                         {check.status === "passed" ? (
                           <CheckCircle2 className="size-3.5 text-primary" />
                         ) : (
                           <XCircle className="size-3.5 text-destructive" />
                         )}
                         <span className="font-medium capitalize">{check.status}</span>
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">
+                          {check.kind === "static" ? "static analysis" : check.kind}
+                        </span>
                         <span className="ml-auto text-[10px] text-muted-foreground">
-                          {new Date(check.created_at).toLocaleTimeString()}
+                          {new Date(check.created_at).toLocaleString()}
                         </span>
                       </div>
                       <pre className="scroll-slim mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap font-mono text-[11px] text-muted-foreground">
