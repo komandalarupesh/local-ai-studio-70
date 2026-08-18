@@ -87,6 +87,13 @@ function ProjectWorkspace() {
   const queryClient = useQueryClient();
   const [pane, setPane] = useState<"files" | "preview" | "checks">("files");
   const [activePath, setActivePath] = useState<string | null>(null);
+  const [openPaths, setOpenPaths] = useState<string[]>([]);
+  const [mobilePane, setMobilePane] = useState<"planner" | "workbench" | null>(null);
+
+  const openFile = useCallback((path: string) => {
+    setActivePath(path);
+    setOpenPaths((prev) => (prev.includes(path) ? prev : [...prev, path]));
+  }, []);
   const [streamed, setStreamed] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -231,6 +238,9 @@ function ProjectWorkspace() {
   );
   const model = conversation?.model || provider?.default_model || "";
   const activeFile = files.find((f) => f.path === activePath) ?? null;
+  const openFiles = openPaths
+    .map((path) => files.find((f) => f.path === path))
+    .filter((f): f is ProjectFile => Boolean(f));
 
   const modelsQuery = useQuery({
     queryKey: ["provider-models", provider?.id],
@@ -298,6 +308,7 @@ function ProjectWorkspace() {
       return file.path;
     },
     onSuccess: (path) => {
+      setOpenPaths((prev) => prev.filter((p) => p !== path));
       if (activePath === path) setActivePath(null);
       invalidate([["project-files", projectId]]);
     },
@@ -407,12 +418,29 @@ function ProjectWorkspace() {
         ["project-files", projectId],
         ["projects"],
       ]);
-      if (result.written.length > 0) {
-        toast.success(`${result.written.length} file(s) written.`);
-        setActivePath(result.written[0] ?? null);
-      }
+      reportWrites(result);
       return result;
     });
+  }
+
+  /** Surfaces exactly what was written, skipped or cut off in this turn. */
+  function reportWrites(result: { written: string[]; rejected: RejectedFile[]; truncated: boolean }) {
+    if (result.written.length > 0) {
+      toast.success(`${result.written.length} file(s) written`, {
+        description: result.written.join(", ").slice(0, 200),
+      });
+      const first = result.written[0];
+      if (first) openFile(first);
+    }
+    if (result.truncated) {
+      toast.warning("The model's output was cut off mid-file", {
+        description:
+          "The incomplete file was not saved, so your existing version is intact. Raise max output tokens or ask for one file at a time.",
+      });
+    }
+    for (const item of result.rejected.slice(0, 3)) {
+      toast.error(`Skipped “${item.path}”`, { description: item.reason });
+    }
   }
 
   async function makePlan(text: string) {
@@ -860,17 +888,27 @@ function ProjectWorkspace() {
                   <FileExplorer
                     files={files}
                     activePath={activePath}
-                    onSelect={(file) => setActivePath(file.path)}
+                    onSelect={(file) => openFile(file.path)}
                     onCreate={() => {
                       const path = window.prompt("New file path", "src/new-file.js");
                       if (path?.trim()) createFile.mutate(path.trim());
                     }}
                     onDelete={(file) => deleteFile.mutate(file)}
+                    loading={filesQuery.isLoading}
                   />
                 </div>
                 <div className="min-h-0 flex-1">
                   <CodeEditor
                     file={activeFile}
+                    openFiles={openFiles}
+                    onSelect={openFile}
+                    onClose={(path) => {
+                      setOpenPaths((prev) => prev.filter((p) => p !== path));
+                      if (activePath === path) {
+                        const next = openPaths.filter((p) => p !== path).at(-1) ?? null;
+                        setActivePath(next);
+                      }
+                    }}
                     saving={saveFile.isPending}
                     onSave={(content) => {
                       if (activeFile) saveFile.mutate({ file: activeFile, content });
