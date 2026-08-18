@@ -3,11 +3,13 @@ import { runModel, type RunMessage, type RunProvider } from "@/lib/model-client"
 import {
   checkProject,
   detectLanguage,
-  normalizePath,
   parseFileBlocks,
+  safePath,
   stripFileBlocks,
   type ProjectFile,
+  type RejectedFile,
 } from "@/lib/project-files";
+import { workingCharBudget } from "@/lib/model-context";
 import { modeConfig, type WorkspaceMode } from "@/lib/workspace-modes";
 
 export type AgentMessage = {
@@ -158,12 +160,13 @@ export async function saveFiles(
   projectId: string,
   files: { path: string; content: string; language?: string }[],
 ): Promise<string[]> {
-  if (files.length === 0) return [];
+  const safe = files.filter((f) => safePath(f.path));
+  if (safe.length === 0) return [];
   const userId = await currentUserId();
-  const rows = files.map((f) => ({
+  const rows = safe.map((f) => ({
     project_id: projectId,
     user_id: userId,
-    path: normalizePath(f.path),
+    path: safePath(f.path)!,
     content: f.content,
     language: f.language ?? detectLanguage(f.path),
   }));
@@ -177,6 +180,8 @@ export async function saveFiles(
 export type AgentTurnResult = {
   text: string;
   written: string[];
+  rejected: RejectedFile[];
+  truncated: boolean;
 };
 
 /** One chat turn: streams the answer, persists it and applies any file output. */
@@ -232,8 +237,12 @@ export async function runAgentTurn(args: {
 
   if (!text.trim()) throw new Error("The model returned an empty response.");
 
-  const parsed = config.buildsFiles ? parseFileBlocks(text) : [];
-  const written = await saveFiles(args.projectId, parsed);
+  const parsed = config.buildsFiles
+    ? parseFileBlocks(text)
+    : { files: [], rejected: [], truncated: false };
+  // Only complete, safely-pathed files are written; existing files are left
+  // untouched when the model output was cut off mid-file.
+  const written = await saveFiles(args.projectId, parsed.files);
 
   await supabase.from("messages").insert({
     conversation_id: args.conversation.id,
@@ -247,7 +256,7 @@ export async function runAgentTurn(args: {
     .update({ updated_at: new Date().toISOString() })
     .eq("id", args.conversation.id);
 
-  return { text, written };
+  return { text, written, rejected: parsed.rejected, truncated: parsed.truncated };
 }
 
 export type PlannedTask = { title: string; detail: string };
