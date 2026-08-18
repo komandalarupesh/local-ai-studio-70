@@ -33,21 +33,27 @@ export type AgentConversation = {
 
 /**
  * Context policy. There is no arbitrary app-level message cap: the whole
- * conversation is sent until it approaches the working window, at which point
- * the oldest turns are folded into a running summary so the thread can keep
- * going. The real ceiling is whatever the selected provider/model supports.
+ * conversation is sent until it approaches the *selected model's* working
+ * window, at which point the oldest turns are folded into a running summary so
+ * the thread can keep going. No model has unlimited context — when the model is
+ * unrecognised we fall back to a conservative window and say so in the UI.
  */
 export const CONTEXT = {
-  /** Approx. chars kept verbatim before compaction kicks in (~4 chars/token). */
-  workingChars: 48_000,
   /** Recent turns always kept verbatim. */
   keepRecentTurns: 8,
+  /** Used only when no model information is available at all. */
+  fallbackChars: 24_000,
 };
 
 export function contextChars(messages: AgentMessage[], summary: string): number {
   return (
     summary.length + messages.filter((m) => !m.compacted).reduce((n, m) => n + m.content.length, 0)
   );
+}
+
+export function contextBudget(model: string | null | undefined, maxOutputTokens: number) {
+  const budget = workingCharBudget(model, maxOutputTokens || 8192);
+  return { ...budget, chars: Math.max(CONTEXT.fallbackChars, budget.chars) };
 }
 
 export type CompactionResult = { compacted: number; summary: string } | null;
@@ -62,7 +68,9 @@ export async function compactIfNeeded(args: {
 }): Promise<CompactionResult> {
   const { conversation, messages, provider, model } = args;
   const live = messages.filter((m) => !m.compacted);
-  if (contextChars(live, conversation.summary) < CONTEXT.workingChars) return null;
+  const budget = contextBudget(model, conversation.max_tokens);
+  if (contextChars(live, conversation.summary) < budget.chars) return null;
+
 
   const older = live.slice(0, Math.max(0, live.length - CONTEXT.keepRecentTurns));
   if (older.length === 0) return null;
