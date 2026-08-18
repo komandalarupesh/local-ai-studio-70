@@ -127,9 +127,10 @@ export async function listModels(provider: ResolvedProvider): Promise<string[]> 
 
   if (!response.ok) throw new LlmError(await readError(response), response.status);
 
-  const payload = (await response.json().catch(() => null)) as
-    | { data?: Array<{ id?: string }>; models?: Array<{ name?: string; model?: string }> }
-    | null;
+  const payload = (await response.json().catch(() => null)) as {
+    data?: Array<{ id?: string }>;
+    models?: Array<{ name?: string; model?: string }>;
+  } | null;
   if (!payload) throw new LlmError("Endpoint returned an unexpected response.", 502);
 
   const models =
@@ -157,9 +158,7 @@ export async function streamChat(
   signal?: AbortSignal,
 ): Promise<ReadableStream<Uint8Array>> {
   const isOllama = provider.kind === "ollama";
-  const url = isOllama
-    ? `${provider.baseUrl}/api/chat`
-    : `${provider.baseUrl}/chat/completions`;
+  const url = isOllama ? `${provider.baseUrl}/api/chat` : `${provider.baseUrl}/chat/completions`;
 
   const body = isOllama
     ? {

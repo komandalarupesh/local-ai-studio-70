@@ -1,9 +1,4 @@
-export type WorkspaceMode =
-  | "reasoning"
-  | "creative"
-  | "coding"
-  | "app_builder"
-  | "website_builder";
+export type WorkspaceMode = "reasoning" | "creative" | "coding" | "app_builder" | "website_builder";
 
 export type ModeConfig = {
   id: WorkspaceMode;

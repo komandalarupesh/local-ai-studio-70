@@ -3,11 +3,13 @@ import { runModel, type RunMessage, type RunProvider } from "@/lib/model-client"
 import {
   checkProject,
   detectLanguage,
-  normalizePath,
   parseFileBlocks,
+  safePath,
   stripFileBlocks,
   type ProjectFile,
+  type RejectedFile,
 } from "@/lib/project-files";
+import { workingCharBudget } from "@/lib/model-context";
 import { modeConfig, type WorkspaceMode } from "@/lib/workspace-modes";
 
 export type AgentMessage = {
@@ -33,21 +35,27 @@ export type AgentConversation = {
 
 /**
  * Context policy. There is no arbitrary app-level message cap: the whole
- * conversation is sent until it approaches the working window, at which point
- * the oldest turns are folded into a running summary so the thread can keep
- * going. The real ceiling is whatever the selected provider/model supports.
+ * conversation is sent until it approaches the *selected model's* working
+ * window, at which point the oldest turns are folded into a running summary so
+ * the thread can keep going. No model has unlimited context — when the model is
+ * unrecognised we fall back to a conservative window and say so in the UI.
  */
 export const CONTEXT = {
-  /** Approx. chars kept verbatim before compaction kicks in (~4 chars/token). */
-  workingChars: 48_000,
   /** Recent turns always kept verbatim. */
   keepRecentTurns: 8,
+  /** Used only when no model information is available at all. */
+  fallbackChars: 24_000,
 };
 
 export function contextChars(messages: AgentMessage[], summary: string): number {
   return (
     summary.length + messages.filter((m) => !m.compacted).reduce((n, m) => n + m.content.length, 0)
   );
+}
+
+export function contextBudget(model: string | null | undefined, maxOutputTokens: number) {
+  const budget = workingCharBudget(model, maxOutputTokens || 8192);
+  return { ...budget, chars: Math.max(CONTEXT.fallbackChars, budget.chars) };
 }
 
 export type CompactionResult = { compacted: number; summary: string } | null;
@@ -62,7 +70,8 @@ export async function compactIfNeeded(args: {
 }): Promise<CompactionResult> {
   const { conversation, messages, provider, model } = args;
   const live = messages.filter((m) => !m.compacted);
-  if (contextChars(live, conversation.summary) < CONTEXT.workingChars) return null;
+  const budget = contextBudget(model, conversation.max_tokens);
+  if (contextChars(live, conversation.summary) < budget.chars) return null;
 
   const older = live.slice(0, Math.max(0, live.length - CONTEXT.keepRecentTurns));
   if (older.length === 0) return null;
@@ -150,12 +159,13 @@ export async function saveFiles(
   projectId: string,
   files: { path: string; content: string; language?: string }[],
 ): Promise<string[]> {
-  if (files.length === 0) return [];
+  const safe = files.filter((f) => safePath(f.path));
+  if (safe.length === 0) return [];
   const userId = await currentUserId();
-  const rows = files.map((f) => ({
+  const rows = safe.map((f) => ({
     project_id: projectId,
     user_id: userId,
-    path: normalizePath(f.path),
+    path: safePath(f.path)!,
     content: f.content,
     language: f.language ?? detectLanguage(f.path),
   }));
@@ -169,6 +179,8 @@ export async function saveFiles(
 export type AgentTurnResult = {
   text: string;
   written: string[];
+  rejected: RejectedFile[];
+  truncated: boolean;
 };
 
 /** One chat turn: streams the answer, persists it and applies any file output. */
@@ -224,8 +236,12 @@ export async function runAgentTurn(args: {
 
   if (!text.trim()) throw new Error("The model returned an empty response.");
 
-  const parsed = config.buildsFiles ? parseFileBlocks(text) : [];
-  const written = await saveFiles(args.projectId, parsed);
+  const parsed = config.buildsFiles
+    ? parseFileBlocks(text)
+    : { files: [], rejected: [], truncated: false };
+  // Only complete, safely-pathed files are written; existing files are left
+  // untouched when the model output was cut off mid-file.
+  const written = await saveFiles(args.projectId, parsed.files);
 
   await supabase.from("messages").insert({
     conversation_id: args.conversation.id,
@@ -239,7 +255,7 @@ export async function runAgentTurn(args: {
     .update({ updated_at: new Date().toISOString() })
     .eq("id", args.conversation.id);
 
-  return { text, written };
+  return { text, written, rejected: parsed.rejected, truncated: parsed.truncated };
 }
 
 export type PlannedTask = { title: string; detail: string };
@@ -328,16 +344,18 @@ export async function runProjectChecks(args: {
 }): Promise<{ status: "passed" | "failed"; output: string }> {
   const issues = checkProject(args.files, args.expectWeb);
   const status = issues.length === 0 ? "passed" : "failed";
-  const output =
+  const header = `Static browser analysis (JSON/JavaScript syntax, HTML entry point, relative references). No compiler, bundler or test runner ran — this workspace has no build container.`;
+  const body =
     issues.length === 0
-      ? `All ${args.files.length} file(s) passed syntax, entry-point and reference checks.`
-      : issues.map((i) => `${i.path}: ${i.message}`).join("\n");
+      ? `All ${args.files.length} file(s) passed. 0 issues.`
+      : `${issues.length} issue(s):\n${issues.map((i) => `${i.path}: ${i.message}`).join("\n")}`;
+  const output = `${header}\n\n${body}`;
 
   const userId = await currentUserId();
   await supabase.from("project_checks").insert({
     project_id: args.projectId,
     user_id: userId,
-    kind: "check",
+    kind: "static",
     status,
     output,
   });

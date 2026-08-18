@@ -30,15 +30,18 @@ import {
 } from "@/lib/agent";
 import { isLocalEndpoint } from "@/lib/local-stream";
 import type { RunProvider } from "@/lib/model-client";
-import type { ProjectFile } from "@/lib/project-files";
+import type { ProjectFile, RejectedFile } from "@/lib/project-files";
 import { MODE_LIST, modeConfig, type WorkspaceMode } from "@/lib/workspace-modes";
 import { cn } from "@/lib/utils";
+import { workingCharBudget } from "@/lib/model-context";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   AlertTriangle,
   CheckCircle2,
   Layers,
+  ListChecks,
   Loader2,
   PlayCircle,
   Settings2,
@@ -46,7 +49,7 @@ import {
   Wrench,
   XCircle,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/workspace/$projectId")({
@@ -85,6 +88,12 @@ function ProjectWorkspace() {
   const queryClient = useQueryClient();
   const [pane, setPane] = useState<"files" | "preview" | "checks">("files");
   const [activePath, setActivePath] = useState<string | null>(null);
+  const [openPaths, setOpenPaths] = useState<string[]>([]);
+
+  const openFile = useCallback((path: string) => {
+    setActivePath(path);
+    setOpenPaths((prev) => (prev.includes(path) ? prev : [...prev, path]));
+  }, []);
   const [streamed, setStreamed] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -229,6 +238,9 @@ function ProjectWorkspace() {
   );
   const model = conversation?.model || provider?.default_model || "";
   const activeFile = files.find((f) => f.path === activePath) ?? null;
+  const openFiles = openPaths
+    .map((path) => files.find((f) => f.path === path))
+    .filter((f): f is ProjectFile => Boolean(f));
 
   const modelsQuery = useQuery({
     queryKey: ["provider-models", provider?.id],
@@ -276,10 +288,7 @@ function ProjectWorkspace() {
 
   const saveFile = useMutation({
     mutationFn: async ({ file, content }: { file: ProjectFile; content: string }) => {
-      const { error } = await supabase
-        .from("project_files")
-        .update({ content })
-        .eq("id", file.id);
+      const { error } = await supabase.from("project_files").update({ content }).eq("id", file.id);
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
@@ -296,6 +305,7 @@ function ProjectWorkspace() {
       return file.path;
     },
     onSuccess: (path) => {
+      setOpenPaths((prev) => prev.filter((p) => p !== path));
       if (activePath === path) setActivePath(null);
       invalidate([["project-files", projectId]]);
     },
@@ -383,10 +393,7 @@ function ProjectWorkspace() {
     await withRun("Generating", async (signal) => {
       setStatus("Managing context");
       await maybeCompact(signal);
-      const fresh = queryClient.getQueryData<AgentMessage[]>([
-        "project-messages",
-        conversation.id,
-      ]);
+      const fresh = queryClient.getQueryData<AgentMessage[]>(["project-messages", conversation.id]);
       setStatus("Generating");
       const result = await runAgentTurn({
         projectId,
@@ -405,12 +412,33 @@ function ProjectWorkspace() {
         ["project-files", projectId],
         ["projects"],
       ]);
-      if (result.written.length > 0) {
-        toast.success(`${result.written.length} file(s) written.`);
-        setActivePath(result.written[0] ?? null);
-      }
+      reportWrites(result);
       return result;
     });
+  }
+
+  /** Surfaces exactly what was written, skipped or cut off in this turn. */
+  function reportWrites(result: {
+    written: string[];
+    rejected: RejectedFile[];
+    truncated: boolean;
+  }) {
+    if (result.written.length > 0) {
+      toast.success(`${result.written.length} file(s) written`, {
+        description: result.written.join(", ").slice(0, 200),
+      });
+      const first = result.written[0];
+      if (first) openFile(first);
+    }
+    if (result.truncated) {
+      toast.warning("The model's output was cut off mid-file", {
+        description:
+          "The incomplete file was not saved, so your existing version is intact. Raise max output tokens or ask for one file at a time.",
+      });
+    }
+    for (const item of result.rejected.slice(0, 3)) {
+      toast.error(`Skipped “${item.path}”`, { description: item.reason });
+    }
   }
 
   async function makePlan(text: string) {
@@ -583,9 +611,41 @@ function ProjectWorkspace() {
   }
 
   const used = contextChars(messages, conversation?.summary ?? "");
-  const pct = Math.min(100, Math.round((used / CONTEXT.workingChars) * 100));
+  const budget = workingCharBudget(model, conversation?.max_tokens ?? 8192);
+  const pct = Math.min(100, Math.round((used / budget.chars) * 100));
   const models = modelsQuery.data ?? [];
   const latestCheck = checksQuery.data?.[0];
+
+  const plannerNode = (
+    <TaskPlanner
+      tasks={tasks}
+      runningTaskId={runningTaskId}
+      busy={busy}
+      onRun={(task) => void withRun(`Step: ${task.title}`, (signal) => runTask(task, signal))}
+      onRunAll={() => void runRemainingTasks()}
+      onReset={(task) => {
+        void supabase
+          .from("project_tasks")
+          .update({ status: "pending" })
+          .eq("id", task.id)
+          .then(() => invalidate([["project-tasks", projectId]]));
+      }}
+      onDelete={(task) => {
+        void supabase
+          .from("project_tasks")
+          .delete()
+          .eq("id", task.id)
+          .then(() => invalidate([["project-tasks", projectId]]));
+      }}
+      onClear={() => {
+        void supabase
+          .from("project_tasks")
+          .delete()
+          .eq("project_id", projectId)
+          .then(() => invalidate([["project-tasks", projectId]]));
+      }}
+    />
+  );
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -678,9 +738,7 @@ function ProjectWorkspace() {
                 defaultValue={conversation?.system_prompt ?? ""}
                 rows={4}
                 className="mt-2 text-xs"
-                onBlur={(event) =>
-                  patchConversation.mutate({ system_prompt: event.target.value })
-                }
+                onBlur={(event) => patchConversation.mutate({ system_prompt: event.target.value })}
               />
               <p className="mt-1 text-[11px] text-muted-foreground">
                 Added on top of the {config.label} mode prompt.
@@ -726,6 +784,25 @@ function ProjectWorkspace() {
         </Popover>
 
         <div className="ml-auto flex items-center gap-2">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="secondary" size="sm" className="h-8 gap-1.5 text-xs xl:hidden">
+                <ListChecks className="size-3.5" />
+                Tasks
+                {tasks.length > 0 && (
+                  <span className="rounded bg-primary/15 px-1 font-mono text-[10px] text-primary">
+                    {tasks.filter((t) => t.status === "done").length}/{tasks.length}
+                  </span>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[320px] p-0">
+              <SheetHeader className="border-b border-border px-4 py-3">
+                <SheetTitle className="text-sm">Task planner</SheetTitle>
+              </SheetHeader>
+              <div className="h-[calc(100%-3.25rem)]">{plannerNode}</div>
+            </SheetContent>
+          </Sheet>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs">
@@ -739,10 +816,13 @@ function ProjectWorkspace() {
                 context, including the running summary.
               </p>
               <p className="text-muted-foreground">
-                At {Math.round(CONTEXT.workingChars / 1000)}k characters the oldest turns are
-                summarized automatically and the newest {CONTEXT.keepRecentTurns} stay verbatim, so
-                long builds keep going. The hard limit is your provider's context window, not this
-                app.
+                {budget.known
+                  ? `Estimated window for “${model}”: ~${Math.round(budget.tokens / 1000)}k tokens (${budget.source}).`
+                  : `“${model || "This model"}” is not in the known-window list, so a conservative ~${Math.round(budget.tokens / 1000)}k-token window is assumed.`}{" "}
+                Around {Math.round(budget.chars / 1000)}k characters the oldest turns are folded
+                into a running summary and the newest {CONTEXT.keepRecentTurns} stay verbatim, so
+                long builds keep going. Context is not unlimited — the real ceiling is your provider
+                and model, and this app adds no smaller cap of its own.
               </p>
             </PopoverContent>
           </Popover>
@@ -769,34 +849,7 @@ function ProjectWorkspace() {
 
       <div className="flex min-h-0 flex-1 flex-col xl:flex-row">
         <section className="hidden w-64 shrink-0 border-r border-border xl:block">
-          <TaskPlanner
-            tasks={tasks}
-            runningTaskId={runningTaskId}
-            busy={busy}
-            onRun={(task) => void withRun(`Step: ${task.title}`, (signal) => runTask(task, signal))}
-            onRunAll={() => void runRemainingTasks()}
-            onReset={(task) => {
-              void supabase
-                .from("project_tasks")
-                .update({ status: "pending" })
-                .eq("id", task.id)
-                .then(() => invalidate([["project-tasks", projectId]]));
-            }}
-            onDelete={(task) => {
-              void supabase
-                .from("project_tasks")
-                .delete()
-                .eq("id", task.id)
-                .then(() => invalidate([["project-tasks", projectId]]));
-            }}
-            onClear={() => {
-              void supabase
-                .from("project_tasks")
-                .delete()
-                .eq("project_id", projectId)
-                .then(() => invalidate([["project-tasks", projectId]]));
-            }}
-          />
+          {plannerNode}
         </section>
 
         <section className="flex min-h-0 min-w-0 flex-1 flex-col border-r border-border">
@@ -850,17 +903,27 @@ function ProjectWorkspace() {
                   <FileExplorer
                     files={files}
                     activePath={activePath}
-                    onSelect={(file) => setActivePath(file.path)}
+                    onSelect={(file) => openFile(file.path)}
                     onCreate={() => {
                       const path = window.prompt("New file path", "src/new-file.js");
                       if (path?.trim()) createFile.mutate(path.trim());
                     }}
                     onDelete={(file) => deleteFile.mutate(file)}
+                    loading={filesQuery.isLoading}
                   />
                 </div>
                 <div className="min-h-0 flex-1">
                   <CodeEditor
                     file={activeFile}
+                    openFiles={openFiles}
+                    onSelect={openFile}
+                    onClose={(path) => {
+                      setOpenPaths((prev) => prev.filter((p) => p !== path));
+                      if (activePath === path) {
+                        const next = openPaths.filter((p) => p !== path).at(-1) ?? null;
+                        setActivePath(next);
+                      }
+                    }}
                     saving={saveFile.isPending}
                     onSave={(content) => {
                       if (activeFile) saveFile.mutate({ file: activeFile, content });
@@ -874,19 +937,30 @@ function ProjectWorkspace() {
 
             {pane === "checks" && (
               <div className="scroll-slim h-full overflow-y-auto p-3">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="mb-3 gap-1.5 text-xs"
-                  disabled={busy}
-                  onClick={() => void runChecks()}
-                >
-                  <PlayCircle className="size-3.5" /> Run checks now
-                </Button>
-                {(checksQuery.data ?? []).length === 0 && (
+                <div className="mb-3 flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="gap-1.5 text-xs"
+                    disabled={busy}
+                    onClick={() => void runChecks()}
+                  >
+                    <PlayCircle className="size-3.5" /> Run static checks
+                  </Button>
+                  {checksQuery.isLoading && (
+                    <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+                  )}
+                </div>
+                <p className="mb-3 rounded-md border border-border/70 bg-muted/30 p-2 text-[11px] leading-relaxed text-muted-foreground">
+                  These are <span className="text-foreground">static browser checks</span> — JSON
+                  and JavaScript syntax, the HTML entry point and relative references. There is no
+                  build container here, so no compiler, bundler, package install or test suite runs,
+                  and a passing result is not a passing build. Download the project to run a real
+                  toolchain locally.
+                </p>
+                {(checksQuery.data ?? []).length === 0 && !checksQuery.isLoading && (
                   <p className="text-xs text-muted-foreground">
-                    No check runs yet. Checks validate JSON and JavaScript syntax, the HTML entry
-                    point and relative file references.
+                    No check runs yet. Run the static checks to see results here.
                   </p>
                 )}
                 <div className="space-y-2">
@@ -895,15 +969,18 @@ function ProjectWorkspace() {
                       key={check.id}
                       className="rounded-lg border border-border/70 bg-surface/50 p-2.5"
                     >
-                      <div className="flex items-center gap-2 text-xs">
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
                         {check.status === "passed" ? (
                           <CheckCircle2 className="size-3.5 text-primary" />
                         ) : (
                           <XCircle className="size-3.5 text-destructive" />
                         )}
                         <span className="font-medium capitalize">{check.status}</span>
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">
+                          {check.kind === "static" ? "static analysis" : check.kind}
+                        </span>
                         <span className="ml-auto text-[10px] text-muted-foreground">
-                          {new Date(check.created_at).toLocaleTimeString()}
+                          {new Date(check.created_at).toLocaleString()}
                         </span>
                       </div>
                       <pre className="scroll-slim mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap font-mono text-[11px] text-muted-foreground">

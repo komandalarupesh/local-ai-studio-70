@@ -65,8 +65,8 @@ export function AgentPanel({
           {compactedCount > 0 && (
             <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-surface/50 px-3 py-2 text-[11px] text-muted-foreground">
               <Layers className="size-3.5 text-primary" />
-              {compactedCount} earlier message{compactedCount === 1 ? "" : "s"} folded into a running
-              summary so this thread can keep growing.
+              {compactedCount} earlier message{compactedCount === 1 ? "" : "s"} folded into a
+              running summary so this thread can keep growing.
             </div>
           )}
 
@@ -174,7 +174,12 @@ export function AgentPanel({
                 <Square className="size-3.5" /> Stop
               </Button>
             ) : (
-              <Button size="sm" className="gap-1.5" disabled={!input.trim()} onClick={() => submit("send")}>
+              <Button
+                size="sm"
+                className="gap-1.5"
+                disabled={!input.trim()}
+                onClick={() => submit("send")}
+              >
                 <SendHorizontal className="size-3.5" /> Send
               </Button>
             )}

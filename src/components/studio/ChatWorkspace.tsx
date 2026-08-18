@@ -71,7 +71,9 @@ export function ChatWorkspace({ conversationId }: { conversationId: string }) {
   const [streamed, setStreamed] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [errorState, setErrorState] = useState<string | null>(null);
-  const [attachments, setAttachments] = useState<{ name: string; size: number; text: string }[]>([]);
+  const [attachments, setAttachments] = useState<{ name: string; size: number; text: string }[]>(
+    [],
+  );
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -129,9 +131,10 @@ export function ChatWorkspace({ conversationId }: { conversationId: string }) {
       if (!activeProvider) return [];
       if (activeProvider.kind !== "lovable" && isLocalEndpoint(activeProvider.base_url)) {
         const { listLocalModels } = await import("@/lib/local-stream");
-        return listLocalModels(activeProvider.kind as "openai" | "ollama", activeProvider.base_url).catch(
-          () => [],
-        );
+        return listLocalModels(
+          activeProvider.kind as "openai" | "ollama",
+          activeProvider.base_url,
+        ).catch(() => []);
       }
       const { testProviderConnection } = await import("@/lib/studio.functions");
       const result = await testProviderConnection({ data: { providerId: activeProvider.id } });
@@ -492,7 +495,9 @@ export function ChatWorkspace({ conversationId }: { conversationId: string }) {
                 max={2}
                 step={0.05}
                 value={[Number(conversation.temperature)]}
-                onValueChange={([value]) => updateConversation.mutate({ temperature: value ?? 0.7 })}
+                onValueChange={([value]) =>
+                  updateConversation.mutate({ temperature: value ?? 0.7 })
+                }
               />
             </div>
             <div>
@@ -506,7 +511,9 @@ export function ChatWorkspace({ conversationId }: { conversationId: string }) {
                 max={16384}
                 step={128}
                 value={[conversation.max_tokens]}
-                onValueChange={([value]) => updateConversation.mutate({ max_tokens: value ?? 2048 })}
+                onValueChange={([value]) =>
+                  updateConversation.mutate({ max_tokens: value ?? 2048 })
+                }
               />
             </div>
           </PopoverContent>

@@ -82,7 +82,11 @@ function StudioLayout() {
     <div className="flex h-full min-h-0">
       <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-sidebar md:flex">
         <div className="p-3">
-          <Button className="w-full" onClick={() => createChat.mutate()} disabled={createChat.isPending}>
+          <Button
+            className="w-full"
+            onClick={() => createChat.mutate()}
+            disabled={createChat.isPending}
+          >
             <MessageSquarePlus className="size-4" /> New chat
           </Button>
         </div>

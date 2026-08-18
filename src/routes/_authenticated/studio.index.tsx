@@ -87,8 +87,8 @@ function StudioIndex() {
           <Plug className="mx-auto size-6 text-primary" />
           <h1 className="mt-3 font-display text-lg font-semibold">Connect a model first</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Add an OpenAI-compatible endpoint, a local Ollama server, or enable the built-in model to
-            start chatting.
+            Add an OpenAI-compatible endpoint, a local Ollama server, or enable the built-in model
+            to start chatting.
           </p>
           <Button asChild className="mt-4">
             <Link to="/providers">Set up providers</Link>
