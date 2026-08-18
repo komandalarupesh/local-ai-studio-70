@@ -288,10 +288,7 @@ function ProjectWorkspace() {
 
   const saveFile = useMutation({
     mutationFn: async ({ file, content }: { file: ProjectFile; content: string }) => {
-      const { error } = await supabase
-        .from("project_files")
-        .update({ content })
-        .eq("id", file.id);
+      const { error } = await supabase.from("project_files").update({ content }).eq("id", file.id);
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
@@ -396,10 +393,7 @@ function ProjectWorkspace() {
     await withRun("Generating", async (signal) => {
       setStatus("Managing context");
       await maybeCompact(signal);
-      const fresh = queryClient.getQueryData<AgentMessage[]>([
-        "project-messages",
-        conversation.id,
-      ]);
+      const fresh = queryClient.getQueryData<AgentMessage[]>(["project-messages", conversation.id]);
       setStatus("Generating");
       const result = await runAgentTurn({
         projectId,
@@ -424,7 +418,11 @@ function ProjectWorkspace() {
   }
 
   /** Surfaces exactly what was written, skipped or cut off in this turn. */
-  function reportWrites(result: { written: string[]; rejected: RejectedFile[]; truncated: boolean }) {
+  function reportWrites(result: {
+    written: string[];
+    rejected: RejectedFile[];
+    truncated: boolean;
+  }) {
     if (result.written.length > 0) {
       toast.success(`${result.written.length} file(s) written`, {
         description: result.written.join(", ").slice(0, 200),
@@ -619,34 +617,34 @@ function ProjectWorkspace() {
   const latestCheck = checksQuery.data?.[0];
 
   const plannerNode = (
-          <TaskPlanner
-            tasks={tasks}
-            runningTaskId={runningTaskId}
-            busy={busy}
-            onRun={(task) => void withRun(`Step: ${task.title}`, (signal) => runTask(task, signal))}
-            onRunAll={() => void runRemainingTasks()}
-            onReset={(task) => {
-              void supabase
-                .from("project_tasks")
-                .update({ status: "pending" })
-                .eq("id", task.id)
-                .then(() => invalidate([["project-tasks", projectId]]));
-            }}
-            onDelete={(task) => {
-              void supabase
-                .from("project_tasks")
-                .delete()
-                .eq("id", task.id)
-                .then(() => invalidate([["project-tasks", projectId]]));
-            }}
-            onClear={() => {
-              void supabase
-                .from("project_tasks")
-                .delete()
-                .eq("project_id", projectId)
-                .then(() => invalidate([["project-tasks", projectId]]));
-            }}
-          />
+    <TaskPlanner
+      tasks={tasks}
+      runningTaskId={runningTaskId}
+      busy={busy}
+      onRun={(task) => void withRun(`Step: ${task.title}`, (signal) => runTask(task, signal))}
+      onRunAll={() => void runRemainingTasks()}
+      onReset={(task) => {
+        void supabase
+          .from("project_tasks")
+          .update({ status: "pending" })
+          .eq("id", task.id)
+          .then(() => invalidate([["project-tasks", projectId]]));
+      }}
+      onDelete={(task) => {
+        void supabase
+          .from("project_tasks")
+          .delete()
+          .eq("id", task.id)
+          .then(() => invalidate([["project-tasks", projectId]]));
+      }}
+      onClear={() => {
+        void supabase
+          .from("project_tasks")
+          .delete()
+          .eq("project_id", projectId)
+          .then(() => invalidate([["project-tasks", projectId]]));
+      }}
+    />
   );
 
   return (
@@ -740,9 +738,7 @@ function ProjectWorkspace() {
                 defaultValue={conversation?.system_prompt ?? ""}
                 rows={4}
                 className="mt-2 text-xs"
-                onBlur={(event) =>
-                  patchConversation.mutate({ system_prompt: event.target.value })
-                }
+                onBlur={(event) => patchConversation.mutate({ system_prompt: event.target.value })}
               />
               <p className="mt-1 text-[11px] text-muted-foreground">
                 Added on top of the {config.label} mode prompt.
@@ -823,10 +819,10 @@ function ProjectWorkspace() {
                 {budget.known
                   ? `Estimated window for “${model}”: ~${Math.round(budget.tokens / 1000)}k tokens (${budget.source}).`
                   : `“${model || "This model"}” is not in the known-window list, so a conservative ~${Math.round(budget.tokens / 1000)}k-token window is assumed.`}{" "}
-                Around {Math.round(budget.chars / 1000)}k characters the oldest turns are
-                folded into a running summary and the newest {CONTEXT.keepRecentTurns} stay
-                verbatim, so long builds keep going. Context is not unlimited — the real ceiling is
-                your provider and model, and this app adds no smaller cap of its own.
+                Around {Math.round(budget.chars / 1000)}k characters the oldest turns are folded
+                into a running summary and the newest {CONTEXT.keepRecentTurns} stay verbatim, so
+                long builds keep going. Context is not unlimited — the real ceiling is your provider
+                and model, and this app adds no smaller cap of its own.
               </p>
             </PopoverContent>
           </Popover>

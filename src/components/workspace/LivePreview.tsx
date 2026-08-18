@@ -46,8 +46,8 @@ export function LivePreview({ files }: { files: ProjectFile[] }) {
                 (images, fonts, JSON) cannot be served.
               </li>
               <li>
-                No bundler or package installs — <span className="font-mono">npm</span> imports,
-                JSX and TypeScript will not execute.
+                No bundler or package installs — <span className="font-mono">npm</span> imports, JSX
+                and TypeScript will not execute.
               </li>
               <li>
                 The sandbox has no access to this app's origin, storage or your session, and cannot

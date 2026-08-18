@@ -74,8 +74,8 @@ function Dashboard() {
             </div>
             <ol className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>
-                <span className="text-foreground">1. Connect a model.</span> Add a provider and run a
-                connection test.
+                <span className="text-foreground">1. Connect a model.</span> Add a provider and run
+                a connection test.
               </li>
               <li>
                 <span className="text-foreground">2. Shape the assistant.</span> Write your default
@@ -128,7 +128,11 @@ function Dashboard() {
               ))}
               {stats.data?.conversations.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  Nothing yet — <Link to="/studio" className="text-primary underline">open Studio</Link>.
+                  Nothing yet —{" "}
+                  <Link to="/studio" className="text-primary underline">
+                    open Studio
+                  </Link>
+                  .
                 </p>
               )}
             </div>
@@ -139,8 +143,8 @@ function Dashboard() {
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li className="flex gap-2">
                 <Cpu className="mt-0.5 size-4 shrink-0 text-primary" />
-                Ollama on <span className="font-mono text-foreground">localhost:11434</span> — Llama,
-                Mistral, Qwen, Gemma and anything else you have pulled.
+                Ollama on <span className="font-mono text-foreground">localhost:11434</span> —
+                Llama, Mistral, Qwen, Gemma and anything else you have pulled.
               </li>
               <li className="flex gap-2">
                 <ServerCog className="mt-0.5 size-4 shrink-0 text-primary" />

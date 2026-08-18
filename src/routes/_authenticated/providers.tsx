@@ -338,7 +338,8 @@ function ProvidersPage() {
           })}
           {providers.data?.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              No providers yet. Add one above, or enable the built-in hosted model to try things out.
+              No providers yet. Add one above, or enable the built-in hosted model to try things
+              out.
             </p>
           )}
         </section>
@@ -348,12 +349,18 @@ function ProvidersPage() {
             Running a local model
           </h2>
           <ol className="mt-3 space-y-1.5">
-            <li>1. Install Ollama and pull a model: <span className="font-mono text-foreground">ollama pull llama3.1</span></li>
+            <li>
+              1. Install Ollama and pull a model:{" "}
+              <span className="font-mono text-foreground">ollama pull llama3.1</span>
+            </li>
             <li>
               2. Allow this app's origin:{" "}
               <span className="font-mono text-foreground">OLLAMA_ORIGINS=* ollama serve</span>
             </li>
-            <li>3. Add the provider above with <span className="font-mono text-foreground">http://localhost:11434</span> and test it.</li>
+            <li>
+              3. Add the provider above with{" "}
+              <span className="font-mono text-foreground">http://localhost:11434</span> and test it.
+            </li>
           </ol>
         </section>
       </div>

@@ -73,7 +73,6 @@ export async function compactIfNeeded(args: {
   const budget = contextBudget(model, conversation.max_tokens);
   if (contextChars(live, conversation.summary) < budget.chars) return null;
 
-
   const older = live.slice(0, Math.max(0, live.length - CONTEXT.keepRecentTurns));
   if (older.length === 0) return null;
 

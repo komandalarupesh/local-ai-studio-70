@@ -189,11 +189,7 @@ function NewProjectPage() {
               className="mt-1.5 text-sm"
             />
           </div>
-          <Button
-            className="gap-1.5"
-            disabled={create.isPending}
-            onClick={() => create.mutate()}
-          >
+          <Button className="gap-1.5" disabled={create.isPending} onClick={() => create.mutate()}>
             {create.isPending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (

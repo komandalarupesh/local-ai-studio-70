@@ -150,7 +150,10 @@ export function parseFileBlocks(text: string): ParseResult {
     }
 
     if (path) {
-      const body = lines.slice(index + 1, end).join("\n").replace(/\s+$/, "");
+      const body = lines
+        .slice(index + 1, end)
+        .join("\n")
+        .replace(/\s+$/, "");
       if (body.length > MAX_FILE_BYTES) {
         rejected.push({ path, reason: `larger than ${Math.round(MAX_FILE_BYTES / 1000)}kB` });
       } else if (body.trim().length === 0) {
@@ -198,7 +201,10 @@ export function stripFileBlocks(text: string): string {
     out.push(`\`${path}\``);
     index = end + 1;
   }
-  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  return out
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 /** Groups flat paths into a nested tree for the explorer. */

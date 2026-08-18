@@ -129,8 +129,8 @@ function Landing() {
             <h2 className="font-display text-2xl font-semibold">Three minutes to your own stack</h2>
             <ol className="mt-4 space-y-3 text-sm text-muted-foreground">
               <li>
-                <span className="text-foreground">1.</span> Create an account — history and providers
-                are private to you.
+                <span className="text-foreground">1.</span> Create an account — history and
+                providers are private to you.
               </li>
               <li>
                 <span className="text-foreground">2.</span> Add a provider: local Ollama, an
