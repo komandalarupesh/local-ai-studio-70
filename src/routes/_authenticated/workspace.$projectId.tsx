@@ -30,7 +30,7 @@ import {
 } from "@/lib/agent";
 import { isLocalEndpoint } from "@/lib/local-stream";
 import type { RunProvider } from "@/lib/model-client";
-import type { ProjectFile } from "@/lib/project-files";
+import type { ProjectFile, RejectedFile } from "@/lib/project-files";
 import { MODE_LIST, modeConfig, type WorkspaceMode } from "@/lib/workspace-modes";
 import { cn } from "@/lib/utils";
 import { workingCharBudget } from "@/lib/model-context";
@@ -48,7 +48,7 @@ import {
   Wrench,
   XCircle,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/workspace/$projectId")({
