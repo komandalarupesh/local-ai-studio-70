@@ -33,7 +33,7 @@ import type { RunProvider } from "@/lib/model-client";
 import type { ProjectFile } from "@/lib/project-files";
 import { MODE_LIST, modeConfig, type WorkspaceMode } from "@/lib/workspace-modes";
 import { cn } from "@/lib/utils";
-import { contextBudget } from "@/lib/model-context";
+import { workingCharBudget } from "@/lib/model-context";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
@@ -585,8 +585,8 @@ function ProjectWorkspace() {
   }
 
   const used = contextChars(messages, conversation?.summary ?? "");
-  const budget = contextBudget(model, conversation?.max_tokens ?? 8192);
-  const pct = Math.min(100, Math.round((used / budget.workingChars) * 100));
+  const budget = workingCharBudget(model, conversation?.max_tokens ?? 8192);
+  const pct = Math.min(100, Math.round((used / budget.chars) * 100));
   const models = modelsQuery.data ?? [];
   const latestCheck = checksQuery.data?.[0];
 
@@ -774,9 +774,9 @@ function ProjectWorkspace() {
               </p>
               <p className="text-muted-foreground">
                 {budget.known
-                  ? `Estimated window for “${model}”: ~${Math.round(budget.contextTokens / 1000)}k tokens.`
-                  : `“${model || "This model"}” is not in the known-window list, so a conservative ~${Math.round(budget.contextTokens / 1000)}k-token window is assumed.`}{" "}
-                Around {Math.round(budget.workingChars / 1000)}k characters the oldest turns are
+                  ? `Estimated window for “${model}”: ~${Math.round(budget.tokens / 1000)}k tokens (${budget.source}).`
+                  : `“${model || "This model"}” is not in the known-window list, so a conservative ~${Math.round(budget.tokens / 1000)}k-token window is assumed.`}{" "}
+                Around {Math.round(budget.chars / 1000)}k characters the oldest turns are
                 folded into a running summary and the newest {CONTEXT.keepRecentTurns} stay
                 verbatim, so long builds keep going. Context is not unlimited — the real ceiling is
                 your provider and model, and this app adds no smaller cap of its own.
