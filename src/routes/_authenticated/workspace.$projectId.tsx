@@ -88,7 +88,6 @@ function ProjectWorkspace() {
   const [pane, setPane] = useState<"files" | "preview" | "checks">("files");
   const [activePath, setActivePath] = useState<string | null>(null);
   const [openPaths, setOpenPaths] = useState<string[]>([]);
-  const [mobilePane, setMobilePane] = useState<"planner" | "workbench" | null>(null);
 
   const openFile = useCallback((path: string) => {
     setActivePath(path);
@@ -788,6 +787,25 @@ function ProjectWorkspace() {
         </Popover>
 
         <div className="ml-auto flex items-center gap-2">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="secondary" size="sm" className="h-8 gap-1.5 text-xs xl:hidden">
+                <ListChecks className="size-3.5" />
+                Tasks
+                {tasks.length > 0 && (
+                  <span className="rounded bg-primary/15 px-1 font-mono text-[10px] text-primary">
+                    {tasks.filter((t) => t.status === "done").length}/{tasks.length}
+                  </span>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[320px] p-0">
+              <SheetHeader className="border-b border-border px-4 py-3">
+                <SheetTitle className="text-sm">Task planner</SheetTitle>
+              </SheetHeader>
+              <div className="h-[calc(100%-3.25rem)]">{plannerNode}</div>
+            </SheetContent>
+          </Sheet>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs">
