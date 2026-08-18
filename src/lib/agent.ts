@@ -345,16 +345,18 @@ export async function runProjectChecks(args: {
 }): Promise<{ status: "passed" | "failed"; output: string }> {
   const issues = checkProject(args.files, args.expectWeb);
   const status = issues.length === 0 ? "passed" : "failed";
-  const output =
+  const header = `Static browser analysis (JSON/JavaScript syntax, HTML entry point, relative references). No compiler, bundler or test runner ran — this workspace has no build container.`;
+  const body =
     issues.length === 0
-      ? `All ${args.files.length} file(s) passed syntax, entry-point and reference checks.`
-      : issues.map((i) => `${i.path}: ${i.message}`).join("\n");
+      ? `All ${args.files.length} file(s) passed. 0 issues.`
+      : `${issues.length} issue(s):\n${issues.map((i) => `${i.path}: ${i.message}`).join("\n")}`;
+  const output = `${header}\n\n${body}`;
 
   const userId = await currentUserId();
   await supabase.from("project_checks").insert({
     project_id: args.projectId,
     user_id: userId,
-    kind: "check",
+    kind: "static",
     status,
     output,
   });
