@@ -206,6 +206,8 @@ export async function runAgentTurn(args: {
   model: string;
   userText: string;
   extraSystem?: string;
+  /** Pinned project memory rendered as a prompt block. */
+  memory?: string;
   onDelta?: (delta: string, full: string) => void;
   signal?: AbortSignal;
 }): Promise<AgentTurnResult> {
@@ -222,11 +224,20 @@ export async function runAgentTurn(args: {
     if (error) throw new Error(error.message);
   }
 
+  const selected = config.buildsFiles
+    ? selectProjectContext({
+        files: args.files,
+        query: `${args.userText}\n${args.extraSystem ?? ""}`,
+        memory: args.memory ?? "",
+      })
+    : null;
+
   const systemPrompt = [
     config.systemPrompt,
+    args.memory?.trim(),
     args.conversation.system_prompt?.trim(),
     args.extraSystem?.trim(),
-    config.buildsFiles ? `Current project state:\n${fileDigest(args.files)}` : "",
+    selected ? `Current project state:\n${selected.digest}` : "",
   ]
     .filter(Boolean)
     .join("\n\n");
