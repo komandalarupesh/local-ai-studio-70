@@ -113,20 +113,32 @@ export async function compactIfNeeded(args: {
   return { compacted: older.length, summary: merged };
 }
 
-function fileDigest(files: ProjectFile[], limitChars = 30_000): string {
-  if (files.length === 0) return "The project has no files yet.";
-  let budget = limitChars;
-  const parts: string[] = [`Existing files: ${files.map((f) => f.path).join(", ")}`];
-  for (const file of files) {
-    const body = file.content.slice(0, 8000);
-    if (budget - body.length < 0) {
-      parts.push(`\n--- ${file.path} (omitted, ${file.content.length} chars) ---`);
-      continue;
+/** Retries transient provider failures with backoff; aborts are never retried. */
+export async function withRetry<T>(
+  fn: (attempt: number) => Promise<T>,
+  options: { attempts?: number; signal?: AbortSignal; onRetry?: (attempt: number, error: Error) => void } = {},
+): Promise<T> {
+  const attempts = options.attempts ?? 3;
+  let lastError: Error = new Error("Unknown failure");
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    if (options.signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    try {
+      return await fn(attempt);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") throw error;
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const message = lastError.message.toLowerCase();
+      const fatal =
+        message.includes("session expired") ||
+        message.includes("no model selected") ||
+        message.includes("unauthorized") ||
+        message.includes("invalid api key");
+      if (fatal || attempt === attempts) throw lastError;
+      options.onRetry?.(attempt, lastError);
+      await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
     }
-    budget -= body.length;
-    parts.push(`\n--- ${file.path} ---\n${body}`);
   }
-  return parts.join("\n");
+  throw lastError;
 }
 
 export function buildRunMessages(args: {
@@ -194,6 +206,8 @@ export async function runAgentTurn(args: {
   model: string;
   userText: string;
   extraSystem?: string;
+  /** Pinned project memory rendered as a prompt block. */
+  memory?: string;
   onDelta?: (delta: string, full: string) => void;
   signal?: AbortSignal;
 }): Promise<AgentTurnResult> {
@@ -210,11 +224,20 @@ export async function runAgentTurn(args: {
     if (error) throw new Error(error.message);
   }
 
+  const selected = config.buildsFiles
+    ? selectProjectContext({
+        files: args.files,
+        query: `${args.userText}\n${args.extraSystem ?? ""}`,
+        memory: args.memory ?? "",
+      })
+    : null;
+
   const systemPrompt = [
     config.systemPrompt,
+    args.memory?.trim(),
     args.conversation.system_prompt?.trim(),
     args.extraSystem?.trim(),
-    config.buildsFiles ? `Current project state:\n${fileDigest(args.files)}` : "",
+    selected ? `Current project state:\n${selected.digest}` : "",
   ]
     .filter(Boolean)
     .join("\n\n");
