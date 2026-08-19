@@ -180,6 +180,47 @@ export type Database = {
           },
         ]
       }
+      project_events: {
+        Row: {
+          created_at: string
+          detail: string
+          id: string
+          kind: string
+          project_id: string
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string
+          id?: string
+          kind: string
+          project_id: string
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string
+          id?: string
+          kind?: string
+          project_id?: string
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_files: {
         Row: {
           content: string
@@ -221,35 +262,129 @@ export type Database = {
           },
         ]
       }
-      project_tasks: {
+      project_memory: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          kind: string
+          pinned: boolean
+          project_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          kind?: string
+          pinned?: boolean
+          project_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          pinned?: boolean
+          project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_memory_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_snapshots: {
         Row: {
           created_at: string
+          file_count: number
+          files: Json
+          id: string
+          label: string
+          project_id: string
+          reason: string
+          summary: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_count?: number
+          files?: Json
+          id?: string
+          label?: string
+          project_id: string
+          reason?: string
+          summary?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_count?: number
+          files?: Json
+          id?: string
+          label?: string
+          project_id?: string
+          reason?: string
+          summary?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_tasks: {
+        Row: {
+          attempts: number
+          created_at: string
           detail: string
+          error: string
           id: string
           position: number
           project_id: string
+          result: string
           status: string
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          attempts?: number
           created_at?: string
           detail?: string
+          error?: string
           id?: string
           position?: number
           project_id: string
+          result?: string
           status?: string
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          attempts?: number
           created_at?: string
           detail?: string
+          error?: string
           id?: string
           position?: number
           project_id?: string
+          result?: string
           status?: string
           title?: string
           updated_at?: string
