@@ -10,6 +10,7 @@ import {
   type RejectedFile,
 } from "@/lib/project-files";
 import { workingCharBudget } from "@/lib/model-context";
+import { selectProjectContext } from "@/lib/context-select";
 import { modeConfig, type WorkspaceMode } from "@/lib/workspace-modes";
 
 export type AgentMessage = {
