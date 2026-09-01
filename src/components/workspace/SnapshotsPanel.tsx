@@ -153,31 +153,33 @@ export function SnapshotsPanel({
                 description="Every current file in this project is replaced with the snapshot contents. A safety snapshot of the current state is taken first, so this stays reversible."
                 confirmLabel="Restore"
                 onConfirm={() => restore.mutate(snapshot.id)}
-              >
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="h-6 gap-1 px-2 text-[11px]"
-                  disabled={restore.isPending}
-                >
-                  <RotateCcw className="size-3" /> Restore
-                </Button>
-              </ConfirmAction>
+                trigger={
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-6 gap-1 px-2 text-[11px]"
+                    disabled={restore.isPending}
+                  >
+                    <RotateCcw className="size-3" /> Restore
+                  </Button>
+                }
+              />
               <ConfirmAction
                 title="Delete this snapshot?"
                 description="The stored file contents for this version are removed permanently."
                 confirmLabel="Delete"
                 onConfirm={() => remove.mutate(snapshot.id)}
-              >
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="ml-auto h-6 px-2 text-[11px]"
-                  aria-label={`Delete snapshot ${snapshot.label}`}
-                >
-                  <Trash2 className="size-3" />
-                </Button>
-              </ConfirmAction>
+                trigger={
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="ml-auto h-6 px-2 text-[11px]"
+                    aria-label={`Delete snapshot ${snapshot.label}`}
+                  >
+                    <Trash2 className="size-3" />
+                  </Button>
+                }
+              />
             </div>
           </div>
         ))}
