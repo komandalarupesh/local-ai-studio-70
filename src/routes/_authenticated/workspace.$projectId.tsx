@@ -2,6 +2,9 @@ import { AgentPanel } from "@/components/workspace/AgentPanel";
 import { CodeEditor } from "@/components/workspace/CodeEditor";
 import { FileExplorer } from "@/components/workspace/FileExplorer";
 import { LivePreview } from "@/components/workspace/LivePreview";
+import { MemoryPanel } from "@/components/workspace/MemoryPanel";
+import { SnapshotsPanel } from "@/components/workspace/SnapshotsPanel";
+import { TimelinePanel } from "@/components/workspace/TimelinePanel";
 import { TaskPlanner, type TaskRow } from "@/components/workspace/TaskPlanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +31,8 @@ import {
   type AgentConversation,
   type AgentMessage,
 } from "@/lib/agent";
+import { runAgentLoop } from "@/lib/agent-loop";
+import { listMemory, memoryPrompt } from "@/lib/project-memory";
 import { isLocalEndpoint } from "@/lib/local-stream";
 import type { RunProvider } from "@/lib/model-client";
 import type { ProjectFile, RejectedFile } from "@/lib/project-files";
@@ -44,6 +49,7 @@ import {
   ListChecks,
   Loader2,
   PlayCircle,
+  Rocket,
   Settings2,
   ShieldCheck,
   Wrench,
@@ -86,7 +92,9 @@ type CheckRow = { id: string; status: string; output: string; created_at: string
 function ProjectWorkspace() {
   const { projectId } = Route.useParams();
   const queryClient = useQueryClient();
-  const [pane, setPane] = useState<"files" | "preview" | "checks">("files");
+  const [pane, setPane] = useState<
+    "files" | "preview" | "checks" | "memory" | "history" | "timeline"
+  >("files");
   const [activePath, setActivePath] = useState<string | null>(null);
   const [openPaths, setOpenPaths] = useState<string[]>([]);
 
@@ -201,12 +209,17 @@ function ProjectWorkspace() {
     queryFn: async (): Promise<TaskRow[]> => {
       const { data, error } = await supabase
         .from("project_tasks")
-        .select("id, title, detail, status, position")
+        .select("id, title, detail, status, position, attempts, error, result")
         .eq("project_id", projectId)
         .order("position", { ascending: true });
       if (error) throw new Error(error.message);
       return (data ?? []) as TaskRow[];
     },
+  });
+
+  const memoryQuery = useQuery({
+    queryKey: ["project-memory", projectId],
+    queryFn: () => listMemory(projectId),
   });
 
   const checksQuery = useQuery({
@@ -230,6 +243,7 @@ function ProjectWorkspace() {
   const tasks = tasksQuery.data ?? [];
   const messages = messagesQuery.data ?? [];
   const mode = (project?.mode ?? "reasoning") as WorkspaceMode;
+  const memory = memoryPrompt(memoryQuery.data ?? []);
   const config = modeConfig(mode);
 
   const provider = useMemo(
@@ -403,6 +417,7 @@ function ProjectWorkspace() {
         files,
         provider: runtime.provider,
         model: runtime.model,
+        memory,
         userText: text,
         onDelta: (_delta, full) => setStreamed(full),
         signal,
@@ -544,6 +559,62 @@ function ProjectWorkspace() {
     });
   }
 
+  /** Invalidates every persisted workspace view after agent-driven changes. */
+  const refreshAll = useCallback(() => {
+    for (const key of [
+      ["project-files", projectId],
+      ["project-tasks", projectId],
+      ["project-checks", projectId],
+      ["project-snapshots", projectId],
+      ["project-events", projectId],
+      ["project-memory", projectId],
+      ["project-conversation", projectId],
+    ] as const) {
+      queryClient.invalidateQueries({ queryKey: key });
+    }
+    if (conversation) {
+      queryClient.invalidateQueries({ queryKey: ["project-messages", conversation.id] });
+    }
+  }, [projectId, queryClient, conversation]);
+
+  /**
+   * Full autonomous run: plan → implement → inspect → check → fix → summarize.
+   * Every phase persists its own state, so cancelling or refreshing leaves a
+   * truthful record instead of an optimistic one.
+   */
+  async function runAutoLoop(text: string, reusePlan: boolean) {
+    const runtime = requireRuntime();
+    if (!runtime || !conversation) return;
+    await withRun("Starting autonomous run", async (signal) => {
+      const result = await runAgentLoop({
+        projectId,
+        mode,
+        conversation,
+        provider: runtime.provider,
+        model: runtime.model,
+        request: text,
+        reusePlan,
+        onUpdate: (update) => setStatus(update.label),
+        onDelta: (_d, full) => setStreamed(full),
+        onRefresh: refreshAll,
+        signal,
+      });
+      refreshAll();
+      const summary = `${result.stepsDone}/${result.stepsTotal} step(s) done` +
+        (result.stepsFailed > 0 ? `, ${result.stepsFailed} failed` : "") +
+        (result.checksPassed === null
+          ? ""
+          : result.checksPassed
+            ? ", static checks passed"
+            : ", static checks still report issues");
+      if (result.phase === "done" && result.checksPassed !== false) toast.success(summary);
+      else if (result.phase === "cancelled") toast.info(`Cancelled — ${summary}`);
+      else toast.warning(summary, { description: "Open the timeline for the exact failures." });
+      setPane("timeline");
+      return result;
+    });
+  }
+
   async function runChecks() {
     const currentFiles =
       queryClient.getQueryData<ProjectFile[]>(["project-files", projectId]) ?? files;
@@ -626,7 +697,7 @@ function ProjectWorkspace() {
       onReset={(task) => {
         void supabase
           .from("project_tasks")
-          .update({ status: "pending" })
+          .update({ status: "pending", error: "", result: "" })
           .eq("id", task.id)
           .then(() => invalidate([["project-tasks", projectId]]));
       }}
@@ -827,6 +898,23 @@ function ProjectWorkspace() {
             </PopoverContent>
           </Popover>
           <Button
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            disabled={busy || tasks.filter((t) => t.status !== "done").length === 0}
+            onClick={() => {
+              const pending = tasks.filter((t) => t.status !== "done");
+              void runAutoLoop(
+                `Continue this project autonomously. Remaining steps: ${pending
+                  .map((t) => t.title)
+                  .join("; ")}`,
+                true,
+              );
+            }}
+            title="Run the remaining plan autonomously with checks and repair rounds"
+          >
+            <Rocket className="size-3.5" /> Auto run
+          </Button>
+          <Button
             variant="secondary"
             size="sm"
             className="h-8 gap-1.5 text-xs"
@@ -874,12 +962,21 @@ function ProjectWorkspace() {
         <section className="flex min-h-0 w-full shrink-0 flex-col border-t border-border xl:w-[38%] xl:border-l xl:border-t-0">
           <div className="border-b border-border px-3 py-2">
             <Tabs value={pane} onValueChange={(value) => setPane(value as typeof pane)}>
-              <TabsList className="h-8">
+              <TabsList className="h-8 flex-wrap">
                 <TabsTrigger value="files" className="text-xs">
                   Files
                 </TabsTrigger>
                 <TabsTrigger value="preview" className="text-xs">
                   Preview
+                </TabsTrigger>
+                <TabsTrigger value="memory" className="text-xs">
+                  Memory
+                </TabsTrigger>
+                <TabsTrigger value="history" className="text-xs">
+                  History
+                </TabsTrigger>
+                <TabsTrigger value="timeline" className="text-xs">
+                  Timeline
                 </TabsTrigger>
                 <TabsTrigger value="checks" className="text-xs">
                   Checks
@@ -934,6 +1031,14 @@ function ProjectWorkspace() {
             )}
 
             {pane === "preview" && <LivePreview files={files} />}
+
+            {pane === "memory" && <MemoryPanel projectId={projectId} />}
+
+            {pane === "history" && (
+              <SnapshotsPanel projectId={projectId} files={files} onRestored={refreshAll} />
+            )}
+
+            {pane === "timeline" && <TimelinePanel projectId={projectId} />}
 
             {pane === "checks" && (
               <div className="scroll-slim h-full overflow-y-auto p-3">

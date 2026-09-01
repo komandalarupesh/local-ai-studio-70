@@ -17,6 +17,9 @@ export type TaskRow = {
   detail: string;
   status: string;
   position: number;
+  attempts?: number | null;
+  error?: string | null;
+  result?: string | null;
 };
 
 export function TaskPlanner({
@@ -106,6 +109,20 @@ export function TaskPlanner({
                     <span className="mr-1 font-mono text-muted-foreground">{index + 1}.</span>
                     {task.title}
                   </p>
+                  {task.attempts != null && task.attempts > 1 && (
+                    <p className="mt-1 font-mono text-[10px] text-amber-500">
+                      {task.attempts} attempt(s)
+                    </p>
+                  )}
+                  {task.error ? (
+                    <p className="mt-1 whitespace-pre-wrap text-[11px] leading-snug text-destructive">
+                      {task.error}
+                    </p>
+                  ) : task.result ? (
+                    <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-primary">
+                      {task.result}
+                    </p>
+                  ) : null}
                   {task.detail && (
                     <p className="mt-1 line-clamp-3 text-[11px] leading-snug text-muted-foreground">
                       {task.detail}
