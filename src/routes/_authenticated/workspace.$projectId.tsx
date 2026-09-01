@@ -33,7 +33,6 @@ import {
 } from "@/lib/agent";
 import { runAgentLoop } from "@/lib/agent-loop";
 import { listMemory, memoryPrompt } from "@/lib/project-memory";
-import { logEvent } from "@/lib/project-activity";
 import { isLocalEndpoint } from "@/lib/local-stream";
 import type { RunProvider } from "@/lib/model-client";
 import type { ProjectFile, RejectedFile } from "@/lib/project-files";
