@@ -124,6 +124,39 @@ export type Database = {
           },
         ]
       }
+      presentations: {
+        Row: {
+          created_at: string
+          id: string
+          slides: Json
+          theme: string
+          title: string
+          topic: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          slides?: Json
+          theme?: string
+          title?: string
+          topic?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          slides?: Json
+          theme?: string
+          title?: string
+          topic?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -490,6 +523,36 @@ export type Database = {
           id?: string
           kind?: string
           name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scenes_3d: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          prompt: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code?: string
+          created_at?: string
+          id?: string
+          prompt?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          prompt?: string
+          title?: string
           updated_at?: string
           user_id?: string
         }
