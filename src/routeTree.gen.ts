@@ -12,12 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAgentsRouteImport } from './routes/_authenticated/agents'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedProvidersRouteImport } from './routes/_authenticated/providers'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated/studio'
 import { Route as AuthenticatedWorkspaceRouteImport } from './routes/_authenticated/workspace'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiFetchUrlRouteImport } from './routes/api/fetch-url'
 import { Route as ApiGenerateRouteImport } from './routes/api/generate'
 import { Route as AuthenticatedStudioIndexRouteImport } from './routes/_authenticated/studio.index'
 import { Route as AuthenticatedStudioConversationIdRouteImport } from './routes/_authenticated/studio.$conversationId'
@@ -37,6 +39,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAgentsRoute = AuthenticatedAgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -66,6 +73,11 @@ const AuthenticatedWorkspaceRoute = AuthenticatedWorkspaceRouteImport.update({
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFetchUrlRoute = ApiFetchUrlRouteImport.update({
+  id: '/api/fetch-url',
+  path: '/api/fetch-url',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiGenerateRoute = ApiGenerateRouteImport.update({
@@ -101,12 +113,14 @@ const AuthenticatedWorkspaceProjectIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/agents': typeof AuthenticatedAgentsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/providers': typeof AuthenticatedProvidersRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/studio': typeof AuthenticatedStudioRouteWithChildren
   '/workspace': typeof AuthenticatedWorkspaceRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/api/fetch-url': typeof ApiFetchUrlRoute
   '/api/generate': typeof ApiGenerateRoute
   '/studio/$conversationId': typeof AuthenticatedStudioConversationIdRoute
   '/workspace/$projectId': typeof AuthenticatedWorkspaceProjectIdRoute
@@ -116,10 +130,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/agents': typeof AuthenticatedAgentsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/providers': typeof AuthenticatedProvidersRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/fetch-url': typeof ApiFetchUrlRoute
   '/api/generate': typeof ApiGenerateRoute
   '/studio/$conversationId': typeof AuthenticatedStudioConversationIdRoute
   '/workspace/$projectId': typeof AuthenticatedWorkspaceProjectIdRoute
@@ -131,12 +147,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/agents': typeof AuthenticatedAgentsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/providers': typeof AuthenticatedProvidersRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/studio': typeof AuthenticatedStudioRouteWithChildren
   '/_authenticated/workspace': typeof AuthenticatedWorkspaceRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/api/fetch-url': typeof ApiFetchUrlRoute
   '/api/generate': typeof ApiGenerateRoute
   '/_authenticated/studio/$conversationId': typeof AuthenticatedStudioConversationIdRoute
   '/_authenticated/workspace/$projectId': typeof AuthenticatedWorkspaceProjectIdRoute
@@ -148,12 +166,14 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/agents'
     | '/dashboard'
     | '/providers'
     | '/settings'
     | '/studio'
     | '/workspace'
     | '/api/chat'
+    | '/api/fetch-url'
     | '/api/generate'
     | '/studio/$conversationId'
     | '/workspace/$projectId'
@@ -163,10 +183,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/agents'
     | '/dashboard'
     | '/providers'
     | '/settings'
     | '/api/chat'
+    | '/api/fetch-url'
     | '/api/generate'
     | '/studio/$conversationId'
     | '/workspace/$projectId'
@@ -177,12 +199,14 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/agents'
     | '/_authenticated/dashboard'
     | '/_authenticated/providers'
     | '/_authenticated/settings'
     | '/_authenticated/studio'
     | '/_authenticated/workspace'
     | '/api/chat'
+    | '/api/fetch-url'
     | '/api/generate'
     | '/_authenticated/studio/$conversationId'
     | '/_authenticated/workspace/$projectId'
@@ -195,6 +219,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiFetchUrlRoute: typeof ApiFetchUrlRoute
   ApiGenerateRoute: typeof ApiGenerateRoute
 }
 
@@ -220,6 +245,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/agents': {
+      id: '/_authenticated/agents'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AuthenticatedAgentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -261,6 +293,13 @@ declare module '@tanstack/react-router' {
       path: '/api/chat'
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/fetch-url': {
+      id: '/api/fetch-url'
+      path: '/api/fetch-url'
+      fullPath: '/api/fetch-url'
+      preLoaderRoute: typeof ApiFetchUrlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/generate': {
@@ -332,6 +371,7 @@ const AuthenticatedWorkspaceRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAgentsRoute: typeof AuthenticatedAgentsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedProvidersRoute: typeof AuthenticatedProvidersRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -340,6 +380,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAgentsRoute: AuthenticatedAgentsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedProvidersRoute: AuthenticatedProvidersRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -355,6 +396,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiFetchUrlRoute: ApiFetchUrlRoute,
   ApiGenerateRoute: ApiGenerateRoute,
 }
 export const routeTree = rootRouteImport
