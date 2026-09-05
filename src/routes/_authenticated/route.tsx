@@ -1,15 +1,19 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { RupeshCopilot } from "@/components/copilot/RupeshCopilot";
 import { cn } from "@/lib/utils";
 import { Link, Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
+  Bot,
   Boxes,
+  Cpu,
   LayoutDashboard,
   Loader2,
   LogOut,
   MessagesSquare,
   Plug,
   Settings,
+  Wrench,
 } from "lucide-react";
 import { useEffect } from "react";
 
@@ -21,6 +25,9 @@ const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/studio", label: "Studio", icon: MessagesSquare },
   { to: "/workspace", label: "Workspace", icon: Boxes },
+  { to: "/agents", label: "Agents", icon: Bot },
+  { to: "/tools", label: "Tools", icon: Wrench },
+  { to: "/models", label: "Models", icon: Cpu },
   { to: "/providers", label: "Providers", icon: Plug },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
@@ -67,6 +74,7 @@ function AuthenticatedLayout() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <RupeshCopilot />
           <span className="hidden text-xs text-muted-foreground md:inline">
             {session.user.email}
           </span>
