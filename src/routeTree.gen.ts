@@ -17,6 +17,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedProvidersRouteImport } from './routes/_authenticated/providers'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated/studio'
+import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/tools'
 import { Route as AuthenticatedWorkspaceRouteImport } from './routes/_authenticated/workspace'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiFetchUrlRouteImport } from './routes/api/fetch-url'
@@ -63,6 +64,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
 const AuthenticatedStudioRoute = AuthenticatedStudioRouteImport.update({
   id: '/studio',
   path: '/studio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedToolsRoute = AuthenticatedToolsRouteImport.update({
+  id: '/tools',
+  path: '/tools',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedWorkspaceRoute = AuthenticatedWorkspaceRouteImport.update({
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/providers': typeof AuthenticatedProvidersRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/studio': typeof AuthenticatedStudioRouteWithChildren
+  '/tools': typeof AuthenticatedToolsRoute
   '/workspace': typeof AuthenticatedWorkspaceRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/fetch-url': typeof ApiFetchUrlRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/providers': typeof AuthenticatedProvidersRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/tools': typeof AuthenticatedToolsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/fetch-url': typeof ApiFetchUrlRoute
   '/api/generate': typeof ApiGenerateRoute
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/_authenticated/providers': typeof AuthenticatedProvidersRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/studio': typeof AuthenticatedStudioRouteWithChildren
+  '/_authenticated/tools': typeof AuthenticatedToolsRoute
   '/_authenticated/workspace': typeof AuthenticatedWorkspaceRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/fetch-url': typeof ApiFetchUrlRoute
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/providers'
     | '/settings'
     | '/studio'
+    | '/tools'
     | '/workspace'
     | '/api/chat'
     | '/api/fetch-url'
@@ -187,6 +197,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/providers'
     | '/settings'
+    | '/tools'
     | '/api/chat'
     | '/api/fetch-url'
     | '/api/generate'
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/_authenticated/providers'
     | '/_authenticated/settings'
     | '/_authenticated/studio'
+    | '/_authenticated/tools'
     | '/_authenticated/workspace'
     | '/api/chat'
     | '/api/fetch-url'
@@ -279,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/studio'
       fullPath: '/studio'
       preLoaderRoute: typeof AuthenticatedStudioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tools': {
+      id: '/_authenticated/tools'
+      path: '/tools'
+      fullPath: '/tools'
+      preLoaderRoute: typeof AuthenticatedToolsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/workspace': {
@@ -376,6 +395,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProvidersRoute: typeof AuthenticatedProvidersRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStudioRoute: typeof AuthenticatedStudioRouteWithChildren
+  AuthenticatedToolsRoute: typeof AuthenticatedToolsRoute
   AuthenticatedWorkspaceRoute: typeof AuthenticatedWorkspaceRouteWithChildren
 }
 
@@ -385,6 +405,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProvidersRoute: AuthenticatedProvidersRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStudioRoute: AuthenticatedStudioRouteWithChildren,
+  AuthenticatedToolsRoute: AuthenticatedToolsRoute,
   AuthenticatedWorkspaceRoute: AuthenticatedWorkspaceRouteWithChildren,
 }
 
