@@ -74,6 +74,7 @@ function AuthenticatedLayout() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <RupeshCopilot />
           <span className="hidden text-xs text-muted-foreground md:inline">
             {session.user.email}
           </span>
