@@ -129,6 +129,103 @@
   color-scheme: dark;
 }
 
+/* Light theme — same token contract, inverted surfaces. */
+.light {
+  color-scheme: light;
+  --background: oklch(0.985 0.004 250);
+  --foreground: oklch(0.22 0.02 254);
+  --surface: oklch(1 0 0);
+  --surface-raised: oklch(0.975 0.005 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.02 254);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.02 254);
+  --primary-foreground: oklch(0.99 0.004 250);
+  --secondary: oklch(0.95 0.008 250);
+  --secondary-foreground: oklch(0.26 0.02 254);
+  --muted: oklch(0.945 0.008 250);
+  --muted-foreground: oklch(0.48 0.02 252);
+  --accent-foreground: oklch(0.24 0.03 70);
+  --border: oklch(0.22 0.02 254 / 12%);
+  --input: oklch(0.22 0.02 254 / 16%);
+  --gradient-hero: radial-gradient(120% 90% at 15% 0%, var(--glow) 0%, transparent 60%),
+    linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.96 0.006 250) 100%);
+  --gradient-panel: linear-gradient(160deg, oklch(1 0 0 / 0.95) 0%, oklch(0.97 0.006 250 / 0.9) 100%);
+  --shadow-panel: 0 20px 50px -34px oklch(0.22 0.02 254 / 0.35);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.24 0.02 254);
+  --sidebar-accent: oklch(0.95 0.008 250);
+  --sidebar-accent-foreground: oklch(0.24 0.02 254);
+  --sidebar-border: oklch(0.22 0.02 254 / 10%);
+}
+
+/* Customizable accent colours. Applied via data-accent on <html>. */
+[data-accent="teal"] {
+  --primary: oklch(0.78 0.14 178);
+  --ring: oklch(0.78 0.14 178 / 60%);
+  --glow: oklch(0.78 0.14 178 / 22%);
+}
+[data-accent="violet"] {
+  --primary: oklch(0.7 0.19 300);
+  --ring: oklch(0.7 0.19 300 / 60%);
+  --glow: oklch(0.7 0.19 300 / 22%);
+}
+[data-accent="blue"] {
+  --primary: oklch(0.68 0.16 250);
+  --ring: oklch(0.68 0.16 250 / 60%);
+  --glow: oklch(0.68 0.16 250 / 22%);
+}
+[data-accent="amber"] {
+  --primary: oklch(0.82 0.15 78);
+  --ring: oklch(0.82 0.15 78 / 60%);
+  --glow: oklch(0.82 0.15 78 / 22%);
+}
+[data-accent="emerald"] {
+  --primary: oklch(0.76 0.16 155);
+  --ring: oklch(0.76 0.16 155 / 60%);
+  --glow: oklch(0.76 0.16 155 / 22%);
+}
+[data-accent="rose"] {
+  --primary: oklch(0.7 0.19 15);
+  --ring: oklch(0.7 0.19 15 / 60%);
+  --glow: oklch(0.7 0.19 15 / 22%);
+}
+[data-accent="teal"].light,
+[data-accent="violet"].light,
+[data-accent="blue"].light,
+[data-accent="emerald"].light,
+[data-accent="rose"].light {
+  --primary-foreground: oklch(0.99 0.004 250);
+}
+
+/* AI activity indicator — a slow signal pulse used by run/stream states. */
+@keyframes ai-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@utility ai-pulse {
+  animation: ai-pulse 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+
 @layer base {
   * {
     border-color: var(--color-border);

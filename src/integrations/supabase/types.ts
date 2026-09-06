@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      action_approvals: {
+        Row: {
+          action: string
+          created_at: string
+          decided_at: string | null
+          id: string
+          payload: Json
+          project_id: string | null
+          result: string
+          status: string
+          summary: string
+          target: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          payload?: Json
+          project_id?: string | null
+          result?: string
+          status?: string
+          summary?: string
+          target?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          payload?: Json
+          project_id?: string | null
+          result?: string
+          status?: string
+          summary?: string
+          target?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "action_approvals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string
@@ -76,6 +129,85 @@ export type Database = {
             columns: ["provider_id"]
             isOneToOne: false
             referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      github_connections: {
+        Row: {
+          account_login: string
+          created_at: string
+          default_branch: string
+          has_token: boolean
+          id: string
+          last_synced_at: string | null
+          project_id: string | null
+          repo_name: string
+          repo_owner: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_login?: string
+          created_at?: string
+          default_branch?: string
+          has_token?: boolean
+          id?: string
+          last_synced_at?: string | null
+          project_id?: string | null
+          repo_name?: string
+          repo_owner?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_login?: string
+          created_at?: string
+          default_branch?: string
+          has_token?: boolean
+          id?: string
+          last_synced_at?: string | null
+          project_id?: string | null
+          repo_name?: string
+          repo_owner?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "github_connections_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      github_secrets: {
+        Row: {
+          connection_id: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connection_id: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connection_id?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "github_secrets_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: true
+            referencedRelation: "github_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -557,6 +689,87 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      usage_events: {
+        Row: {
+          agent_id: string
+          completion_tokens: number | null
+          conversation_id: string | null
+          cost_usd: number | null
+          created_at: string
+          error: string
+          id: string
+          kind: string
+          latency_ms: number
+          model: string
+          project_id: string | null
+          prompt_tokens: number | null
+          provider_kind: string
+          request_id: string
+          retries: number
+          status: string
+          tools: string[]
+          user_id: string
+          verification: string
+        }
+        Insert: {
+          agent_id?: string
+          completion_tokens?: number | null
+          conversation_id?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          error?: string
+          id?: string
+          kind?: string
+          latency_ms?: number
+          model?: string
+          project_id?: string | null
+          prompt_tokens?: number | null
+          provider_kind?: string
+          request_id?: string
+          retries?: number
+          status?: string
+          tools?: string[]
+          user_id: string
+          verification?: string
+        }
+        Update: {
+          agent_id?: string
+          completion_tokens?: number | null
+          conversation_id?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          error?: string
+          id?: string
+          kind?: string
+          latency_ms?: number
+          model?: string
+          project_id?: string | null
+          prompt_tokens?: number | null
+          provider_kind?: string
+          request_id?: string
+          retries?: number
+          status?: string
+          tools?: string[]
+          user_id?: string
+          verification?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_events_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_settings: {
         Row: {
