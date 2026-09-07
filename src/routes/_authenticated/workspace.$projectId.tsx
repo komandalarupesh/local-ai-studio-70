@@ -1033,6 +1033,7 @@ function ProjectWorkspace() {
                       if (path?.trim()) createFile.mutate(path.trim());
                     }}
                     onDelete={(file) => deleteFile.mutate(file)}
+                    onRename={(file, path) => renameFile.mutate({ file, path })}
                     loading={filesQuery.isLoading}
                   />
                 </div>
