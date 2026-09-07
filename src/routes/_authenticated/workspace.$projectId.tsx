@@ -36,6 +36,7 @@ import { listMemory, memoryPrompt } from "@/lib/project-memory";
 import { isLocalEndpoint } from "@/lib/local-stream";
 import type { RunProvider } from "@/lib/model-client";
 import type { ProjectFile, RejectedFile } from "@/lib/project-files";
+import { safePath } from "@/lib/project-files";
 import { MODE_LIST, modeConfig, type WorkspaceMode } from "@/lib/workspace-modes";
 import { cn } from "@/lib/utils";
 import { workingCharBudget } from "@/lib/model-context";
@@ -326,8 +327,34 @@ function ProjectWorkspace() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const renameFile = useMutation({
+    mutationFn: async ({ file, path }: { file: ProjectFile; path: string }) => {
+      const clean = safePath(path);
+      if (!clean) throw new Error("That file path is not allowed.");
+      if (files.some((f) => f.path === clean && f.id !== file.id))
+        throw new Error("A file with that path already exists.");
+      const { error } = await supabase
+        .from("project_files")
+        .update({ path: clean })
+        .eq("id", file.id);
+      if (error) throw new Error(error.message);
+      return { from: file.path, to: clean };
+    },
+    onSuccess: ({ from, to }) => {
+      setOpenPaths((prev) => prev.map((p) => (p === from ? to : p)));
+      setActivePath((prev) => (prev === from ? to : prev));
+      invalidate([["project-files", projectId]]);
+      toast.success(`Renamed to ${to}`);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   const createFile = useMutation({
-    mutationFn: async (path: string) => {
+    mutationFn: async (raw: string) => {
+      const path = safePath(raw);
+      if (!path) throw new Error("That file path is not allowed.");
+      if (files.some((f) => f.path === path))
+        throw new Error("A file with that path already exists.");
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) throw new Error("Your session expired. Sign in again.");
@@ -1006,6 +1033,7 @@ function ProjectWorkspace() {
                       if (path?.trim()) createFile.mutate(path.trim());
                     }}
                     onDelete={(file) => deleteFile.mutate(file)}
+                    onRename={(file, path) => renameFile.mutate({ file, path })}
                     loading={filesQuery.isLoading}
                   />
                 </div>

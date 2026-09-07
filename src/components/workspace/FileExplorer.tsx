@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmAction } from "@/components/workspace/ConfirmAction";
 import { cn } from "@/lib/utils";
 import { buildTree, type ProjectFile, type TreeNode } from "@/lib/project-files";
-import { ChevronDown, ChevronRight, File, FilePlus, Folder, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, File, FilePlus, Folder, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 export function FileExplorer({
@@ -11,6 +11,7 @@ export function FileExplorer({
   onSelect,
   onCreate,
   onDelete,
+  onRename,
   loading = false,
 }: {
   files: ProjectFile[];
@@ -18,6 +19,7 @@ export function FileExplorer({
   onSelect: (file: ProjectFile) => void;
   onCreate: () => void;
   onDelete: (file: ProjectFile) => void;
+  onRename?: ((file: ProjectFile, path: string) => void) | undefined;
   loading?: boolean;
 }) {
   const tree = buildTree(files);
@@ -52,6 +54,7 @@ export function FileExplorer({
               activePath={activePath}
               onSelect={onSelect}
               onDelete={onDelete}
+              onRename={onRename}
             />
           ))
         )}
@@ -66,12 +69,14 @@ function TreeItem({
   activePath,
   onSelect,
   onDelete,
+  onRename,
 }: {
   node: TreeNode;
   depth: number;
   activePath: string | null;
   onSelect: (file: ProjectFile) => void;
   onDelete: (file: ProjectFile) => void;
+  onRename?: ((file: ProjectFile, path: string) => void) | undefined;
 }) {
   const [open, setOpen] = useState(true);
 
@@ -92,6 +97,19 @@ function TreeItem({
           <File className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate font-mono">{node.name}</span>
         </button>
+        {onRename && (
+          <button
+            className="opacity-60 transition-opacity hover:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+            aria-label={`Rename ${node.path}`}
+            onClick={() => {
+              const next = window.prompt("New file path", node.path);
+              if (next?.trim() && next.trim() !== node.path && node.file)
+                onRename(node.file, next.trim());
+            }}
+          >
+            <Pencil className="size-3.5 text-muted-foreground hover:text-foreground" />
+          </button>
+        )}
         <ConfirmAction
           title="Delete this file?"
           description={`"${node.path}" will be permanently removed from the project. This cannot be undone.`}
@@ -129,6 +147,7 @@ function TreeItem({
             activePath={activePath}
             onSelect={onSelect}
             onDelete={onDelete}
+            onRename={onRename}
           />
         ))}
     </div>

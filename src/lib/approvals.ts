@@ -60,7 +60,7 @@ export async function requestApproval(args: {
       action: args.action,
       target: args.target,
       summary: args.summary,
-      payload: args.payload ?? {},
+      payload: JSON.parse(JSON.stringify(args.payload ?? {})),
     })
     .select(COLUMNS)
     .single();
