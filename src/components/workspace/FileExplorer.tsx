@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmAction } from "@/components/workspace/ConfirmAction";
 import { cn } from "@/lib/utils";
 import { buildTree, type ProjectFile, type TreeNode } from "@/lib/project-files";
-import { ChevronDown, ChevronRight, File, FilePlus, Folder, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, File, FilePlus, Folder, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 export function FileExplorer({
@@ -11,6 +11,7 @@ export function FileExplorer({
   onSelect,
   onCreate,
   onDelete,
+  onRename,
   loading = false,
 }: {
   files: ProjectFile[];
@@ -18,6 +19,7 @@ export function FileExplorer({
   onSelect: (file: ProjectFile) => void;
   onCreate: () => void;
   onDelete: (file: ProjectFile) => void;
+  onRename?: (file: ProjectFile, path: string) => void;
   loading?: boolean;
 }) {
   const tree = buildTree(files);
