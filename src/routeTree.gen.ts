@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAgentsRouteImport } from './routes/_authenticated/agents'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedModelsRouteImport } from './routes/_authenticated/models'
+import { Route as AuthenticatedPresentationsRouteImport } from './routes/_authenticated/presentations'
 import { Route as AuthenticatedProvidersRouteImport } from './routes/_authenticated/providers'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated/studio'
@@ -57,6 +58,12 @@ const AuthenticatedModelsRoute = AuthenticatedModelsRouteImport.update({
   path: '/models',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPresentationsRoute =
+  AuthenticatedPresentationsRouteImport.update({
+    id: '/presentations',
+    path: '/presentations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedProvidersRoute = AuthenticatedProvidersRouteImport.update({
   id: '/providers',
   path: '/providers',
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/agents': typeof AuthenticatedAgentsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/models': typeof AuthenticatedModelsRoute
+  '/presentations': typeof AuthenticatedPresentationsRoute
   '/providers': typeof AuthenticatedProvidersRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/studio': typeof AuthenticatedStudioRouteWithChildren
@@ -147,6 +155,7 @@ export interface FileRoutesByTo {
   '/agents': typeof AuthenticatedAgentsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/models': typeof AuthenticatedModelsRoute
+  '/presentations': typeof AuthenticatedPresentationsRoute
   '/providers': typeof AuthenticatedProvidersRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tools': typeof AuthenticatedToolsRoute
@@ -166,6 +175,7 @@ export interface FileRoutesById {
   '/_authenticated/agents': typeof AuthenticatedAgentsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/models': typeof AuthenticatedModelsRoute
+  '/_authenticated/presentations': typeof AuthenticatedPresentationsRoute
   '/_authenticated/providers': typeof AuthenticatedProvidersRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/studio': typeof AuthenticatedStudioRouteWithChildren
@@ -187,6 +197,7 @@ export interface FileRouteTypes {
     | '/agents'
     | '/dashboard'
     | '/models'
+    | '/presentations'
     | '/providers'
     | '/settings'
     | '/studio'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/agents'
     | '/dashboard'
     | '/models'
+    | '/presentations'
     | '/providers'
     | '/settings'
     | '/tools'
@@ -224,6 +236,7 @@ export interface FileRouteTypes {
     | '/_authenticated/agents'
     | '/_authenticated/dashboard'
     | '/_authenticated/models'
+    | '/_authenticated/presentations'
     | '/_authenticated/providers'
     | '/_authenticated/settings'
     | '/_authenticated/studio'
@@ -289,6 +302,13 @@ declare module '@tanstack/react-router' {
       path: '/models'
       fullPath: '/models'
       preLoaderRoute: typeof AuthenticatedModelsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/presentations': {
+      id: '/_authenticated/presentations'
+      path: '/presentations'
+      fullPath: '/presentations'
+      preLoaderRoute: typeof AuthenticatedPresentationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/providers': {
@@ -412,6 +432,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgentsRoute: typeof AuthenticatedAgentsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedModelsRoute: typeof AuthenticatedModelsRoute
+  AuthenticatedPresentationsRoute: typeof AuthenticatedPresentationsRoute
   AuthenticatedProvidersRoute: typeof AuthenticatedProvidersRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStudioRoute: typeof AuthenticatedStudioRouteWithChildren
@@ -423,6 +444,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAgentsRoute: AuthenticatedAgentsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedModelsRoute: AuthenticatedModelsRoute,
+  AuthenticatedPresentationsRoute: AuthenticatedPresentationsRoute,
   AuthenticatedProvidersRoute: AuthenticatedProvidersRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStudioRoute: AuthenticatedStudioRouteWithChildren,
