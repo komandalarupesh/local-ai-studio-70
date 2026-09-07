@@ -19,7 +19,7 @@ export function FileExplorer({
   onSelect: (file: ProjectFile) => void;
   onCreate: () => void;
   onDelete: (file: ProjectFile) => void;
-  onRename?: (file: ProjectFile, path: string) => void;
+  onRename?: ((file: ProjectFile, path: string) => void) | undefined;
   loading?: boolean;
 }) {
   const tree = buildTree(files);
@@ -76,7 +76,7 @@ function TreeItem({
   activePath: string | null;
   onSelect: (file: ProjectFile) => void;
   onDelete: (file: ProjectFile) => void;
-  onRename?: (file: ProjectFile, path: string) => void;
+  onRename?: ((file: ProjectFile, path: string) => void) | undefined;
 }) {
   const [open, setOpen] = useState(true);
 
