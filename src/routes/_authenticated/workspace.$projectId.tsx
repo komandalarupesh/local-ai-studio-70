@@ -36,6 +36,7 @@ import { listMemory, memoryPrompt } from "@/lib/project-memory";
 import { isLocalEndpoint } from "@/lib/local-stream";
 import type { RunProvider } from "@/lib/model-client";
 import type { ProjectFile, RejectedFile } from "@/lib/project-files";
+import { safePath } from "@/lib/project-files";
 import { MODE_LIST, modeConfig, type WorkspaceMode } from "@/lib/workspace-modes";
 import { cn } from "@/lib/utils";
 import { workingCharBudget } from "@/lib/model-context";
