@@ -327,8 +327,34 @@ function ProjectWorkspace() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const renameFile = useMutation({
+    mutationFn: async ({ file, path }: { file: ProjectFile; path: string }) => {
+      const clean = safePath(path);
+      if (!clean) throw new Error("That file path is not allowed.");
+      if (files.some((f) => f.path === clean && f.id !== file.id))
+        throw new Error("A file with that path already exists.");
+      const { error } = await supabase
+        .from("project_files")
+        .update({ path: clean })
+        .eq("id", file.id);
+      if (error) throw new Error(error.message);
+      return { from: file.path, to: clean };
+    },
+    onSuccess: ({ from, to }) => {
+      setOpenPaths((prev) => prev.map((p) => (p === from ? to : p)));
+      setActivePath((prev) => (prev === from ? to : prev));
+      invalidate([["project-files", projectId]]);
+      toast.success(`Renamed to ${to}`);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   const createFile = useMutation({
-    mutationFn: async (path: string) => {
+    mutationFn: async (raw: string) => {
+      const path = safePath(raw);
+      if (!path) throw new Error("That file path is not allowed.");
+      if (files.some((f) => f.path === path))
+        throw new Error("A file with that path already exists.");
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) throw new Error("Your session expired. Sign in again.");
